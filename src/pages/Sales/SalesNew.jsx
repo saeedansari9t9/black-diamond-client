@@ -11,7 +11,7 @@ export default function SalesNew() {
   const [customers, setCustomers] = useState([]);
   const [customerId, setCustomerId] = useState("");
   const [customerName, setCustomerName] = useState("");
-  const [saleType, setSaleType] = useState("wholesale"); // default for your business
+  const [saleType, setSaleType] = useState("retail"); // default for your business
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [paidAmount, setPaidAmount] = useState(0);
   const [note, setNote] = useState("");
@@ -75,9 +75,9 @@ export default function SalesNew() {
     setItems((prev) => {
       const exists = prev.find((x) => x.productId === p._id);
       const defaultPrice =
-        saleType === "wholesale"
-          ? Number(p.wholesalePrice || 0)
-          : Number(p.retailPrice || 0);
+        saleType === "retail"
+          ? Number(p.retailPrice || 0)
+          : Number(p.wholesalePrice || 0);
 
       if (exists) {
         return prev.map((x) =>
@@ -234,8 +234,8 @@ export default function SalesNew() {
                 onChange={(e) => setSaleType(e.target.value)}
                 className="mt-1 w-full rounded-xl border bg-gray-50 px-3 py-2.5 text-sm outline-none focus:border-gray-300"
               >
-                <option value="wholesale">Wholesale</option>
                 <option value="retail">Retail</option>
+                <option value="wholesale">Wholesale</option>
               </select>
             </div>
 

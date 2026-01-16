@@ -13,7 +13,6 @@ import InvoicePrint from "./pages/Sales/InvoicePrint";
 import Invoices from "./pages/Sales/Invoices";
 import Customers from "./pages/Customers/Customers";
 import Materials from "./pages/Masters/Materials";
-import Shades from "./pages/Masters/Shades";
 import Products from "./pages/Masters/Products";
 
 export default function App() {
@@ -40,7 +39,6 @@ export default function App() {
           <Route path="/customers/:id" element={<CustomerDetail />} />
           <Route path="/invoices/:id" element={<InvoicePrint />} />
           <Route path="/masters/materials" element={<Materials />} />
-          <Route path="/masters/shades" element={<Shades />} />
           <Route path="/masters/products" element={<Products />} />
         </Route>
       </Routes>

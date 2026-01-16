@@ -3,10 +3,7 @@ import { api } from "../../api/axios";
 
 export default function Materials() {
   const [name, setName] = useState("");
-  const [materialType, setMaterialType] = useState("");
   const [attributes, setAttributes] = useState([]);
-  const [useShade, setUseShade] = useState(true);
-  const [useQuality, setUseQuality] = useState(true);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -40,16 +37,10 @@ export default function Materials() {
       }));
       await api.post("/materials", {
         name: name.trim(),
-        materialType: materialType.trim(),
         attributes: attrs,
-        useShade: !!useShade,
-        useQuality: !!useQuality,
       });
       setName("");
-      setMaterialType("");
       setAttributes([]);
-      setUseShade(true);
-      setUseQuality(true);
       setMsg("Material added ✅");
       await load();
     } catch (e) {
@@ -63,15 +54,14 @@ export default function Materials() {
     <div className="space-y-5">
       <div>
         <div className="text-xl font-bold">Materials</div>
-        <div className="text-sm text-gray-500">Add materials (viscose / polister / zari)</div>
       </div>
 
       {msg ? <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{msg}</div> : null}
       {err ? <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{err}</div> : null}
 
       <div className="rounded-2xl border bg-white p-4 shadow-sm">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <div className="sm:col-span-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div>
             <div className="text-xs text-gray-500">Material name</div>
             <input
               value={name}
@@ -80,16 +70,7 @@ export default function Materials() {
               className="mt-1 w-full rounded-xl border bg-gray-50 px-3 py-2.5 text-sm outline-none focus:border-gray-300"
             />
           </div>
-          <div>
-            <div className="text-xs text-gray-500">Material Type</div>
-            <input
-              value={materialType}
-              onChange={(e) => setMaterialType(e.target.value)}
-              placeholder="e.g. NEEDLE or POLY"
-              className="mt-1 w-full rounded-xl border bg-gray-50 px-3 py-2.5 text-sm outline-none focus:border-gray-300"
-            />
-          </div>
-          <div className="sm:col-span-3">
+          <div className="sm:col-span-2">
             <div className="text-xs text-gray-500">Attributes (optional)</div>
             <div className="space-y-2 mt-2">
               {attributes.map((a, idx) => (
@@ -110,10 +91,6 @@ export default function Materials() {
                 <button onClick={() => setAttributes([...attributes, { key: '', label: '', type: 'text', required: false, options: '' }])} className="rounded-xl bg-gray-100 px-3 py-1 text-sm">Add attribute</button>
               </div>
             </div>
-          </div>
-          <div className="sm:col-span-3 flex items-center gap-4">
-            <label className="text-xs flex items-center gap-2"><input type="checkbox" checked={useShade} onChange={(e) => setUseShade(e.target.checked)} /> Use Shade</label>
-            <label className="text-xs flex items-center gap-2"><input type="checkbox" checked={useQuality} onChange={(e) => setUseQuality(e.target.checked)} /> Use Quality</label>
           </div>
           <div className="flex items-end">
             <button

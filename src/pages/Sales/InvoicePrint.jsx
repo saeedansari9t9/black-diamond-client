@@ -146,11 +146,7 @@ export default function InvoicePrint() {
                         {it.productId?.materialId?.name || "Material"}
                       </div>
                       <div className="text-xs text-gray-600">
-                        {/* {it.productId?.materialId?.name || "Material"} • Shade{" "} */}
-                        {it.productId?.shadeId?.shadeCode || "-"}
-                        {it.productId?.shadeId?.shadeName
-                          ? ` (${it.productId.shadeId.shadeName})`
-                          : ""}{" "}
+                        {it.productId?.sku || "-"}
                       </div>
                     </td>
                     <td>{it.qty}</td>

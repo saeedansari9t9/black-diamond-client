@@ -37,11 +37,6 @@ export default function Sidebar({ isOpen, onClose }) {
           roles: ["admin", "manager", "sales", "accountant", "inventory"],
         },
         {
-          to: "/masters/shades",
-          label: "Shades",
-          roles: ["admin", "manager", "sales", "inventory"],
-        },
-        {
           to: "/masters/products",
           label: "Products",
           roles: ["admin", "manager", "sales", "inventory"],
@@ -102,18 +97,18 @@ export default function Sidebar({ isOpen, onClose }) {
 
   const linkClass = ({ isActive }) =>
     [
-      "group flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition",
+      "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
       isActive
-        ? "bg-white/10 text-white"
-        : "text-slate-200/80 hover:bg-white/5 hover:text-white",
+        ? "text-blue-500 bg-blue-50/10 border-l-2 border-blue-500 pl-2.5"
+        : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40",
     ].join(" ");
 
   const categoryClass = (isExpanded) =>
     [
-      "group flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition cursor-pointer",
+      "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 cursor-pointer",
       isExpanded
-        ? "bg-white/10 text-white"
-        : "text-slate-200/80 hover:bg-white/5 hover:text-white",
+        ? "text-blue-500 bg-blue-50/10"
+        : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40",
     ].join(" ");
 
   const allowedItems = navItems.filter((n) =>
@@ -135,17 +130,17 @@ export default function Sidebar({ isOpen, onClose }) {
             }
             className={categoryClass(isExpanded)}
           >
-            <span className="grid h-9 w-9 place-items-center rounded-lg bg-white/5 text-base">
+            <span className="grid h-8 w-8 place-items-center rounded-md bg-slate-700/40 group-hover:bg-slate-700/60 group-hover:text-blue-400 transition-all duration-200 text-slate-400">
               {item.icon}
             </span>
             <span className="flex-1 text-left">{item.label}</span>
             <ChevronDown
               size={16}
-              className={`transition-transform ${isExpanded ? "rotate-180" : ""}`}
+              className={`transition-transform duration-300 ${isExpanded ? "rotate-180 text-blue-500" : "text-slate-400"}`}
             />
           </button>
           {isExpanded && (
-            <div className="mt-1 space-y-1 pl-4">
+            <div className="mt-1.5 space-y-1 pl-4 border-l border-slate-700/40 ml-4">
               {allowedSubmenu.map((sub) => (
                 <NavLink
                   key={sub.to}
@@ -153,8 +148,8 @@ export default function Sidebar({ isOpen, onClose }) {
                   className={linkClass}
                   onClick={onClose}
                 >
-                  <span className="flex-1">{sub.label}</span>
-                  <span className="opacity-0 transition group-hover:opacity-100">
+                  <span className="flex-1 text-sm">{sub.label}</span>
+                  <span className="opacity-0 transition-opacity duration-200 group-hover:opacity-100 text-blue-500">
                     ›
                   </span>
                 </NavLink>
@@ -167,12 +162,12 @@ export default function Sidebar({ isOpen, onClose }) {
 
     return (
       <NavLink key={item.to} to={item.to} className={linkClass} onClick={onClose}>
-        <span className="grid h-9 w-9 place-items-center rounded-lg bg-white/5 text-base">
+        <span className="grid h-8 w-8 place-items-center rounded-md bg-slate-700/40 group-hover:bg-slate-700/60 group-hover:text-blue-400 transition-all duration-200 text-slate-400">
           {item.icon}
         </span>
         <span className="flex-1">{item.label}</span>
-        <span className="opacity-0 transition group-hover:opacity-100">
-          ›
+        <span className="opacity-0 transition-opacity duration-200 group-hover:opacity-100 text-blue-500">
+          →
         </span>
       </NavLink>
     );
@@ -181,22 +176,20 @@ export default function Sidebar({ isOpen, onClose }) {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden sm:flex w-64 shrink-0 bg-gradient-to-b from-slate-950 to-slate-900 text-white flex-col h-screen">
-        <div className="flex h-16 items-center gap-3 px-4">
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-white/10">
-            <span className="text-lg">
-              <Square size={18} />
-            </span>
+      <aside className="hidden sm:flex w-64 shrink-0 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white flex-col h-screen border-r border-slate-700/40 shadow-lg">
+        <div className="flex h-16 items-center gap-3 px-5 border-b border-slate-700/40">
+          <div className="grid h-10 w-10 place-items-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
+            <span className="text-lg font-bold">BD</span>
           </div>
           <div className="leading-tight">
-            <div className="text-sm font-semibold">BlackDiamond</div>
-            <div className="text-xs text-slate-300/70">ERP Dashboard</div>
+            <div className="text-sm font-bold text-white">BlackDiamond</div>
+            <div className="text-xs text-slate-400">ERP System</div>
           </div>
         </div>
 
-        <div className="px-3">
-          <div className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-slate-300/60">
-            Menu
+        <div className="flex-1 px-3 py-4 overflow-y-auto">
+          <div className="mb-4 px-3 text-[11px] font-semibold uppercase tracking-widest text-slate-500">
+            Navigation
           </div>
 
           <nav className="space-y-1">
@@ -204,12 +197,11 @@ export default function Sidebar({ isOpen, onClose }) {
           </nav>
         </div>
 
-        <div className="mt-auto px-4 pb-4 pt-6">
-          <div className="rounded-2xl bg-white/5 p-3 text-xs text-slate-200/80">
-            <div className="font-semibold text-white">Logged in</div>
-            <div className="mt-1">
-              {user?.name || "User"}{" "}
-              <span className="text-slate-300/70">({user?.role || "role"})</span>
+        <div className="px-4 pb-5 pt-4 border-t border-slate-700/40">
+          <div className="rounded-lg bg-gradient-to-br from-slate-700/40 to-slate-800/40 p-3 text-xs text-slate-300 border border-slate-600/30">
+            <div className="font-semibold text-slate-100">👤 {user?.name || "User"}</div>
+            <div className="mt-1.5 text-slate-400 capitalize">
+              {user?.role || "role"}
             </div>
           </div>
         </div>
@@ -226,23 +218,21 @@ export default function Sidebar({ isOpen, onClose }) {
         />
 
         <aside
-          className={`absolute left-0 top-0 bottom-0 z-50 w-64 bg-gradient-to-b from-slate-950 to-slate-900 text-white transform transition-transform ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
+          className={`absolute left-0 top-0 bottom-0 z-50 w-64 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white transform transition-transform border-r border-slate-700/40 shadow-2xl ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
         >
-          <div className="flex h-16 items-center gap-3 px-4">
-            <div className="grid h-10 w-10 place-items-center rounded-xl bg-white/10">
-              <span className="text-lg">
-                <Square size={18} />
-              </span>
+          <div className="flex h-16 items-center gap-3 px-5 border-b border-slate-700/40">
+            <div className="grid h-10 w-10 place-items-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
+              <span className="text-lg font-bold">BD</span>
             </div>
             <div className="leading-tight">
-              <div className="text-sm font-semibold">BlackDiamond</div>
-              <div className="text-xs text-slate-300/70">ERP Dashboard</div>
+              <div className="text-sm font-bold text-white">BlackDiamond</div>
+              <div className="text-xs text-slate-400">ERP System</div>
             </div>
           </div>
 
-          <div className="px-3">
-            <div className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-slate-300/60">
-              Menu
+          <div className="px-3 py-4">
+            <div className="mb-4 px-3 text-[11px] font-semibold uppercase tracking-widest text-slate-500">
+              Navigation
             </div>
 
             <nav className="space-y-1">
@@ -250,12 +240,11 @@ export default function Sidebar({ isOpen, onClose }) {
             </nav>
           </div>
 
-          <div className="mt-auto px-4 pb-4 pt-6">
-            <div className="rounded-2xl bg-white/5 p-3 text-xs text-slate-200/80">
-              <div className="font-semibold text-white">Logged in</div>
-              <div className="mt-1">
-                {user?.name || "User"}{" "}
-                <span className="text-slate-300/70">({user?.role || "role"})</span>
+          <div className="px-4 pb-5 pt-4 border-t border-slate-700/40">
+            <div className="rounded-lg bg-gradient-to-br from-slate-700/40 to-slate-800/40 p-3 text-xs text-slate-300 border border-slate-600/30">
+              <div className="font-semibold text-slate-100">👤 {user?.name || "User"}</div>
+              <div className="mt-1.5 text-slate-400 capitalize">
+                {user?.role || "role"}
               </div>
             </div>
           </div>

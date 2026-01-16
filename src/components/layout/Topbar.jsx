@@ -53,7 +53,6 @@ export default function Topbar({ onToggleSidebar }) {
               ☰
             </button>
           </div>
-          <div className="text-xs text-gray-500">Black Diamond ERP</div>
           <div className="text-base font-semibold text-gray-900">
             {title}
           </div>
@@ -61,11 +60,6 @@ export default function Topbar({ onToggleSidebar }) {
 
         {/* RIGHT */}
         <div className="flex items-center gap-3">
-          {/* Notifications */}
-          <button className="inline-flex h-10 w-10 items-center justify-center rounded-xl border bg-white hover:bg-gray-50">
-            🔔
-          </button>
-
           {/* User dropdown */}
           <div className="relative" ref={ref}>
             <button
