@@ -5,3 +5,13 @@ export async function fetchProducts(q = "") {
   const res = await api.get(`/products${qs}`);
   return res.data.data || [];
 }
+
+export const updateProduct = async (id, data) => {
+  const res = await api.put(`/products/${id}`, data);
+  return res.data;
+};
+
+export const deleteProduct = async (id) => {
+  const res = await api.delete(`/products/${id}`);
+  return res.data;
+};

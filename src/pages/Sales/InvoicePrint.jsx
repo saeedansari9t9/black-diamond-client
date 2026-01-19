@@ -12,12 +12,17 @@ export default function InvoicePrint() {
 
   const printRef = useRef(null);
 
+  const [err, setErr] = useState("");
+
   useEffect(() => {
     const run = async () => {
       setLoading(true);
       try {
         const res = await api.get(`/sales/${id}`);
         setSale(res.data.data);
+      } catch (e) {
+        console.error(e);
+        setErr(e.response?.data?.message || e.message || "Failed to load");
       } finally {
         setLoading(false);
       }
@@ -36,9 +41,17 @@ export default function InvoicePrint() {
   }, [sale]);
 
   if (loading)
-    return <div className="text-sm text-gray-500">Loading invoice…</div>;
+    return <div className="text-sm text-gray-500">Loading invoice {id}...</div>;
+
   if (!sale)
-    return <div className="text-sm text-red-600">Invoice not found</div>;
+    return (
+      <div className="p-4 text-sm text-red-600">
+        <div className="font-bold">Invoice not found</div>
+        <div>ID: {id}</div>
+        <div>Error: {err}</div>
+        <button onClick={() => window.location.reload()} className="mt-2 text-blue-600 hover:underline">Retry</button>
+      </div>
+    );
 
   return (
     <div className="space-y-4">

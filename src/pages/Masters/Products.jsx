@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../../api/axios";
+import { CirclePlus, Pencil, Trash2 } from "lucide-react";
+import toast, { Toaster } from 'react-hot-toast';
+import Swal from 'sweetalert2';
+import { updateProduct, deleteProduct } from "../../api/products";
 
 export default function Products() {
   const [materials, setMaterials] = useState([]);
@@ -14,12 +18,13 @@ export default function Products() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const [msg, setMsg] = useState("");
-  const [err, setErr] = useState("");
+  const [editingId, setEditingId] = useState(null);
 
   const loadMaterials = async () => {
-    const res = await api.get("/materials");
-    setMaterials(res.data.data || []);
+    try {
+      const res = await api.get("/materials");
+      setMaterials(res.data.data || []);
+    } catch (e) { console.error(e) }
   };
 
   const loadProducts = async () => {
@@ -40,7 +45,9 @@ export default function Products() {
   }, []);
 
   useEffect(() => {
-    setAttributesValues({});
+    if (!editingId) {
+      setAttributesValues({});
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [materialId]);
 
@@ -49,9 +56,8 @@ export default function Products() {
     [materials, materialId]
   );
 
-  const create = async () => {
-    setMsg(""); setErr("");
-    if (!materialId) return setErr("Select material");
+  const handleSubmit = async () => {
+    if (!materialId) return toast.error("Select material");
 
     setSaving(true);
     try {
@@ -62,30 +68,74 @@ export default function Products() {
         wholesalePrice: Number(wholesalePrice || 0),
       };
 
-      await api.post("/products", payload);
+      if (editingId) {
+        await updateProduct(editingId, payload);
+        toast.success("Product updated successfully!");
+      } else {
+        await api.post("/products", payload);
+        toast.success("Product created successfully!");
+      }
 
-      setMsg("Product created ✅ (SKU auto generated)");
       setRetailPrice(0);
       setWholesalePrice(0);
       setAttributesValues({});
+      setEditingId(null);
+      setMaterialId("");
       await loadProducts();
     } catch (e) {
-      setErr(e?.response?.data?.message || "Failed to create product");
+      toast.error(e?.response?.data?.message || "Operation failed");
     } finally {
       setSaving(false);
     }
   };
 
+  const cancelEdit = () => {
+    setEditingId(null);
+    setMaterialId("");
+    setRetailPrice(0);
+    setWholesalePrice(0);
+    setAttributesValues({});
+  };
+
+  const openEdit = (product) => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setEditingId(product._id);
+    setMaterialId(product.materialId?._id || product.materialId);
+    setRetailPrice(product.retailPrice);
+    setWholesalePrice(product.wholesalePrice);
+    setAttributesValues(product.attributes || {});
+  };
+
+  const handleDelete = async (id) => {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await deleteProduct(id);
+        toast.success("Product deleted successfully.");
+        loadProducts();
+      } catch (error) {
+        toast.error(error?.response?.data?.message || "Failed to delete");
+      }
+    }
+  };
+
   return (
     <div className="space-y-5">
+      <Toaster position="top-center" />
       <div>
         <div className="text-xl font-bold">Products</div>
       </div>
 
-      {msg ? <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{msg}</div> : null}
-      {err ? <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{err}</div> : null}
-
-      {/* Create form */}
+      {/* Create/Edit form */}
       <div className="rounded-2xl border bg-white p-4 shadow-sm">
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
           <div className="lg:col-span-4">
@@ -95,13 +145,14 @@ export default function Products() {
                 value={materialId}
                 onChange={(e) => setMaterialId(e.target.value)}
                 className="mt-1 flex-1 rounded-xl border bg-gray-50 px-3 py-2.5 text-sm outline-none focus:border-gray-300"
+                disabled={!!editingId}
               >
                 <option value="">Select material</option>
                 {materials.map((m) => (
                   <option key={m._id} value={m._id}>{m.name}</option>
                 ))}
               </select>
-              <button onClick={loadMaterials} title="Reload materials" className="mt-1 inline-flex items-center px-3 rounded-xl border bg-white hover:bg-gray-50">⟳</button>
+              <button disabled={!!editingId} onClick={loadMaterials} title="Reload materials" className="mt-1 inline-flex items-center px-3 rounded-xl border bg-white hover:bg-gray-50">⟳</button>
             </div>
           </div>
 
@@ -160,14 +211,22 @@ export default function Products() {
                 />
               </div>
 
-              <div className="lg:col-span-4 flex items-end">
+              <div className="lg:col-span-4 flex items-end gap-2">
                 <button
                   disabled={saving}
-                  onClick={create}
+                  onClick={handleSubmit}
                   className="w-full rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
                 >
-                  {saving ? "Creating..." : "Create Product"}
+                  {saving ? "Saving..." : (editingId ? "Update Product" : "Create Product")}
                 </button>
+                {editingId && (
+                  <button
+                    onClick={cancelEdit}
+                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                )}
               </div>
             </>
           )}
@@ -211,7 +270,6 @@ export default function Products() {
                   <tr>
                     <th className="px-3 py-2">SKU</th>
                     <th className="px-3 py-2">Material</th>
-                    {/* <th className="px-3 py-2">Quality</th> */}
                     {attrKeys.map((key) => (
                       <th key={key} className="px-3 py-2 capitalize">
                         {attrLabels[key] || key}
@@ -219,6 +277,7 @@ export default function Products() {
                     ))}
                     <th className="px-3 py-2 text-right">Whole Sale Price</th>
                     <th className="px-3 py-2 text-right">Retail Price</th>
+                    <th className="px-3 py-2 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -226,11 +285,6 @@ export default function Products() {
                     <tr key={p._id} className="hover:bg-gray-50">
                       <td className="px-3 py-2 font-semibold text-blue-600">{p.sku}</td>
                       <td className="px-3 py-2 font-medium">{p.materialId?.name || "—"}</td>
-                      {/* <td className="px-3 py-2 capitalize">
-                        <span className="inline-block px-2 py-1 rounded bg-amber-100 text-amber-800 text-xs font-medium">
-                          {p.qualityType || "—"}
-                        </span>
-                      </td> */}
                       {attrKeys.map((key) => (
                         <td key={key} className="px-3 py-2 text-gray-700">
                           {p.attributes?.[key] || "—"}
@@ -238,10 +292,26 @@ export default function Products() {
                       ))}
                       <td className="px-3 py-2 text-right font-medium">Rs. {p.wholesalePrice}</td>
                       <td className="px-3 py-2 text-right font-medium">Rs. {p.retailPrice}</td>
+                      <td className="px-3 py-2 text-right">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => openEdit(p)}
+                            className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition-colors hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
+                          >
+                            <Pencil size={14} /> Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(p._id)}
+                            className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition-colors hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                          >
+                            <Trash2 size={14} /> Delete
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                   {!loading && rows.length === 0 ? (
-                    <tr><td className="px-3 py-6 text-gray-500 text-center" colSpan={6 + attrKeys.length}>No products found</td></tr>
+                    <tr><td className="px-3 py-6 text-gray-500 text-center" colSpan={7 + attrKeys.length}>No products found</td></tr>
                   ) : null}
                 </tbody>
               </table>

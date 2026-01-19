@@ -14,6 +14,13 @@ import Invoices from "./pages/Sales/Invoices";
 import Customers from "./pages/Customers/Customers";
 import Materials from "./pages/Masters/Materials";
 import Products from "./pages/Masters/Products";
+import Suppliers from "./pages/Purchases/Suppliers";
+import PurchaseList from "./pages/Purchases/PurchaseList";
+import NewPurchase from "./pages/Purchases/NewPurchase";
+import Stock from "./pages/Inventory/Stock";
+import AdjustStock from "./pages/Inventory/AdjustStock";
+import ProductionEntry from "./pages/Inventory/ProductionEntry";
+import RawMaterials from "./pages/Inventory/RawMaterials";
 
 export default function App() {
   return (
@@ -35,11 +42,23 @@ export default function App() {
           <Route path="/settings" element={<Settings />} />
           <Route path="/sales/new" element={<SalesNew />} />
           <Route path="/sales/invoices" element={<Invoices />} />
+          <Route path="/sales/invoices/:id/print" element={<InvoicePrint />} />
           <Route path="/customers" element={<Customers />} />
           <Route path="/customers/:id" element={<CustomerDetail />} />
-          <Route path="/invoices/:id" element={<InvoicePrint />} />
           <Route path="/masters/materials" element={<Materials />} />
           <Route path="/masters/products" element={<Products />} />
+
+          {/* Purchase Routes */}
+          <Route path="/purchases" element={<PurchaseList />} />
+          <Route path="/purchases/suppliers" element={<Suppliers />} />
+          <Route path="/purchases/new" element={<NewPurchase />} />
+          {/* <Route path="/purchases/:id" element={<PurchaseDetail />} /> */}
+
+          {/* Inventory Routes */}
+          <Route path="/inventory/stock" element={<Stock />} />
+          <Route path="/inventory/adjust-stock" element={<AdjustStock />} />
+          <Route path="/inventory/production" element={<ProductionEntry />} />
+          <Route path="/inventory/raw-materials" element={<RawMaterials />} />
         </Route>
       </Routes>
     </BrowserRouter>

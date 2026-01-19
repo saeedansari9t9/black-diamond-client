@@ -169,7 +169,7 @@ export default function Invoices() {
                                         </td>
                                         <td className="px-3 py-2 text-center">
                                             <button
-                                                onClick={() => nav(`/invoices/${inv._id}`)}
+                                                onClick={() => nav(`/sales/invoices/${inv._id}/print`)}
                                                 className="inline-block rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-black"
                                             >
                                                 Print

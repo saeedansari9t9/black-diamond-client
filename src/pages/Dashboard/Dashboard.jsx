@@ -36,7 +36,7 @@ export default function Dashboard() {
           api.get("/reports/sales-summary?range=month"),
           api.get("/reports/sales-summary?range=lastMonth"),
           api.get("/reports/sales-trend-daily?days=14"),
-          api.get("/reports/top-shades?limit=10"),
+          api.get("/reports/top-products?limit=10"),
         ]);
 
         setToday(t.data.data);
@@ -54,7 +54,7 @@ export default function Dashboard() {
 
         setTop(
           (tp.data.data || []).map((x) => ({
-            name: `${x.material}-${x.shadeCode}`,
+            name: `${x.material} - ${x.sku}`,
             qtySold: x.qtySold,
           }))
         );
@@ -109,7 +109,7 @@ export default function Dashboard() {
         </div>
 
         <div className="rounded-2xl border bg-white p-4 shadow-sm">
-          <div className="mb-3 text-sm font-semibold">Top Shades (Qty Sold)</div>
+          <div className="mb-3 text-sm font-semibold">Top Products (Qty Sold)</div>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={top}>

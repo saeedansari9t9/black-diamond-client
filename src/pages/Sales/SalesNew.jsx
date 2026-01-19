@@ -56,13 +56,9 @@ export default function SalesNew() {
       .filter((p) => {
         const sku = (p.sku || "").toLowerCase();
         const mat = (p.materialId?.name || "").toLowerCase();
-        const shade = (p.shadeId?.shadeCode || "").toLowerCase();
-        const shadeName = (p.shadeId?.shadeName || "").toLowerCase();
         return (
           sku.includes(q) ||
-          mat.includes(q) ||
-          shade.includes(q) ||
-          shadeName.includes(q)
+          mat.includes(q)
         );
       })
       .slice(0, 30);
@@ -92,8 +88,7 @@ export default function SalesNew() {
           productId: p._id,
           sku: p.sku,
           material: p.materialId?.name,
-          shadeCode: p.shadeId?.shadeCode,
-          shadeName: p.shadeId?.shadeName,
+          attributes: p.attributes || {}, // Capture attributes
           size: p.size,
           qualityType: p.qualityType,
           qty: 1,
@@ -112,6 +107,13 @@ export default function SalesNew() {
       prev.map((x) => (x.productId === productId ? { ...x, ...patch } : x))
     );
   };
+
+  // Helper to display attributes string
+  const getAttrString = (attrs) => {
+    if (!attrs) return "";
+    return Object.values(attrs).filter(Boolean).join(" • ");
+  };
+
 
   const subTotal = useMemo(() => {
     return items.reduce(
@@ -167,7 +169,8 @@ export default function SalesNew() {
       const res = await api.post("/sales", payload);
 
       // Navigate to invoice print page
-      nav(`/invoices/${res.data.data._id}`);
+      // Navigate to invoice print page
+      nav(`/sales/invoices/${res.data.data._id}/print`);
       return;
     } catch (e) {
       setErr(e?.response?.data?.message || "Failed to save sale");
@@ -209,100 +212,6 @@ export default function SalesNew() {
 
       {/* Top form */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <div className="rounded-2xl border bg-white p-4 shadow-sm xl:col-span-2">
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-            <div className="md:col-span-2">
-              <div className="text-xs text-gray-500">Customer</div>
-              <select
-                value={customerId}
-                onChange={(e) => setCustomerId(e.target.value)}
-                className="mt-1 w-full rounded-xl border bg-gray-50 px-3 py-2.5 text-sm outline-none focus:border-gray-300"
-              >
-                <option value="">Walk-in</option>
-                {customers.map((c) => (
-                  <option key={c._id} value={c._id}>
-                    {c.name} {c.phone ? `(${c.phone})` : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <div className="text-xs text-gray-500">Sale Type</div>
-              <select
-                value={saleType}
-                onChange={(e) => setSaleType(e.target.value)}
-                className="mt-1 w-full rounded-xl border bg-gray-50 px-3 py-2.5 text-sm outline-none focus:border-gray-300"
-              >
-                <option value="retail">Retail</option>
-                <option value="wholesale">Wholesale</option>
-              </select>
-            </div>
-
-            <div>
-              <div className="text-xs text-gray-500">Payment</div>
-              <select
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className="mt-1 w-full rounded-xl border bg-gray-50 px-3 py-2.5 text-sm outline-none focus:border-gray-300"
-              >
-                <option value="cash">Cash</option>
-                <option value="bank">Bank</option>
-                <option value="credit">Credit</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="mt-3">
-            <div className="text-xs text-gray-500">Note</div>
-            <input
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Optional note"
-              className="mt-1 w-full rounded-xl border bg-gray-50 px-3 py-2.5 text-sm outline-none focus:border-gray-300"
-            />
-          </div>
-        </div>
-
-        {/* Totals */}
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
-          <div className="text-sm font-semibold">Totals</div>
-
-          <div className="mt-3 space-y-3">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Subtotal</span>
-              <span className="font-semibold">{money(subTotal)}</span>
-            </div>
-
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Grand Total</span>
-              <span className="text-base font-bold">{money(grandTotal)}</span>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500">Paid</span>
-                <span className="font-semibold">{money(paidAmount)}</span>
-              </div>
-              <input
-                type="number"
-                value={paidAmount}
-                onChange={(e) => setPaidAmount(Number(e.target.value))}
-                className="mt-1 w-full rounded-xl border bg-gray-50 px-3 py-2 text-sm outline-none focus:border-gray-300"
-                min={0}
-              />
-            </div>
-
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Due</span>
-              <span className="font-bold text-red-600">{money(dueAmount)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Product picker + Cart */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         {/* Product Picker */}
         <div className="rounded-2xl border bg-white p-4 shadow-sm xl:col-span-1">
           <div className="flex items-center justify-between">
@@ -316,27 +225,27 @@ export default function SalesNew() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search SKU / material / shade"
-              className="w-full rounded-xl border bg-gray-50 px-3 py-2.5 text-sm outline-none focus:border-gray-300"
+              placeholder="Search SKU / material"
+              className="w-full rounded-xl border bg-gray-50 px-3 py-2 text-sm outline-none focus:border-gray-300"
             />
           </div>
 
-          <div className="mt-3 max-h-[420px] overflow-auto rounded-xl border">
+          <div className="mt-3 max-h-[320px] overflow-auto rounded-xl border">
             {filteredProducts.map((p) => (
               <button
                 key={p._id}
                 onClick={() => addToCart(p)}
-                className="flex w-full items-start justify-between gap-3 border-b px-3 py-3 text-left hover:bg-gray-50 last:border-b-0"
+                className="flex w-full items-start justify-between gap-3 border-b px-3 py-2 text-left hover:bg-gray-50 last:border-b-0"
               >
                 <div>
                   <div className="text-sm font-semibold text-gray-900">
                     {p.sku}
                   </div>
                   <div className="mt-0.5 text-xs text-gray-500">
-                    {p.materialId?.name} • Shade {p.shadeId?.shadeCode}
-                    {p.shadeId?.shadeName
-                      ? ` (${p.shadeId?.shadeName})`
-                      : ""} • {p.size} • {p.qualityType}
+                    {p.materialId?.name}
+                    {p.attributes && Object.keys(p.attributes).length > 0
+                      ? ` ${Object.values(p.attributes).filter(Boolean).join(" • ")}`
+                      : ""}
                   </div>
                 </div>
                 <span className="rounded-lg border px-2 py-1 text-xs">Add</span>
@@ -370,14 +279,16 @@ export default function SalesNew() {
               <tbody>
                 {items.map((it) => (
                   <tr key={it.productId} className="border-b last:border-b-0">
-                    <td className="px-3 py-3">
+                    <td className="px-3 py-2">
                       <div className="text-sm font-semibold">{it.sku}</div>
                       <div className="text-xs text-gray-500">
-                        {it.material} • Shade {it.shadeCode} • {it.size} •{" "}
-                        {it.qualityType}
+                        {it.material}
+                        {it.attributes && Object.keys(it.attributes).length > 0
+                          ? ` ${getAttrString(it.attributes)}`
+                          : ""}
                       </div>
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="px-3 py-2">
                       <input
                         type="number"
                         min={1}
@@ -403,10 +314,10 @@ export default function SalesNew() {
                         className="w-full rounded-lg border bg-gray-50 px-2 py-1.5 text-sm outline-none focus:border-gray-300"
                       />
                     </td>
-                    <td className="px-3 py-3 text-sm font-semibold">
+                    <td className="px-3 py-2 text-sm font-semibold">
                       {money(Number(it.qty) * Number(it.price))}
                     </td>
-                    <td className="px-3 py-3 text-right">
+                    <td className="px-3 py-2 text-right">
                       <button
                         onClick={() => removeItem(it.productId)}
                         className="rounded-lg border px-2 py-1 text-sm hover:bg-gray-100"
@@ -438,8 +349,10 @@ export default function SalesNew() {
                   <div>
                     <div className="text-sm font-semibold">{it.sku}</div>
                     <div className="text-xs text-gray-500">
-                      {it.material} • Shade {it.shadeCode} • {it.size} •{" "}
-                      {it.qualityType}
+                      {it.material}
+                      {it.attributes && Object.keys(it.attributes).length > 0
+                        ? ` • ${getAttrString(it.attributes)}`
+                        : ""}
                     </div>
                   </div>
                   <button
@@ -495,6 +408,99 @@ export default function SalesNew() {
                 Add products from above list to create invoice
               </div>
             ) : null}
+          </div>
+        </div>
+      </div>
+
+      {/* Product picker + Cart */}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <div className="rounded-2xl border bg-white p-4 shadow-sm xl:col-span-2">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+            <div className="md:col-span-2">
+              <div className="text-xs text-gray-500">Customer</div>
+              <select
+                value={customerId}
+                onChange={(e) => setCustomerId(e.target.value)}
+                className="mt-1 w-full rounded-xl border bg-gray-50 px-3 py-2 text-sm outline-none focus:border-gray-300"
+              >
+                <option value="">Walk-in</option>
+                {customers.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.name} {c.phone ? `(${c.phone})` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <div className="text-xs text-gray-500">Sale Type</div>
+              <select
+                value={saleType}
+                onChange={(e) => setSaleType(e.target.value)}
+                className="mt-1 w-full rounded-xl border bg-gray-50 px-3 py-2 text-sm outline-none focus:border-gray-300"
+              >
+                <option value="retail">Retail</option>
+                <option value="wholesale">Wholesale</option>
+              </select>
+            </div>
+
+            <div>
+              <div className="text-xs text-gray-500">Payment</div>
+              <select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                className="mt-1 w-full rounded-xl border bg-gray-50 px-3 py-2 text-sm outline-none focus:border-gray-300"
+              >
+                <option value="cash">Cash</option>
+                <option value="credit">Credit</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="mt-3">
+            <div className="text-xs text-gray-500">Note</div>
+            <input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Optional note"
+              className="mt-1 w-full rounded-xl border bg-gray-50 px-3 py-2 text-sm outline-none focus:border-gray-300"
+            />
+          </div>
+        </div>
+
+        {/* Totals */}
+        <div className="rounded-2xl border bg-white p-4 shadow-sm">
+          <div className="text-sm font-semibold">Totals</div>
+
+          <div className="mt-3 space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-500">Subtotal</span>
+              <span className="font-semibold">{money(subTotal)}</span>
+            </div>
+
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-500">Grand Total</span>
+              <span className="text-base font-bold">{money(grandTotal)}</span>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500">Paid</span>
+                <span className="font-semibold">{money(paidAmount)}</span>
+              </div>
+              <input
+                type="number"
+                value={paidAmount}
+                onChange={(e) => setPaidAmount(Number(e.target.value))}
+                className="mt-1 w-full rounded-xl border bg-gray-50 px-3 py-2 text-sm outline-none focus:border-gray-300"
+                min={0}
+              />
+            </div>
+
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-500">Due</span>
+              <span className="font-bold text-red-600">{money(dueAmount)}</span>
+            </div>
           </div>
         </div>
       </div>
