@@ -13,7 +13,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Sun,
-  Moon
+  Moon,
+  ShoppingCart,
+  Settings
 } from "lucide-react";
 
 export default function Sidebar({ isOpen, onClose }) {
@@ -99,21 +101,6 @@ export default function Sidebar({ isOpen, onClose }) {
           roles: ["admin", "manager", "inventory"],
         },
         {
-          to: "/purchases",
-          label: "Purchases",
-          roles: ["admin", "manager", "inventory", "accountant"],
-        },
-        {
-          to: "/purchases/suppliers",
-          label: "Suppliers",
-          roles: ["admin", "manager", "inventory", "accountant"],
-        },
-        {
-          to: "/purchases/new",
-          label: "New Purchase",
-          roles: ["admin", "manager", "inventory"],
-        },
-        {
           to: "/inventory/adjust-stock",
           label: "Adjust Stock",
           roles: ["admin", "manager", "inventory"],
@@ -122,6 +109,29 @@ export default function Sidebar({ isOpen, onClose }) {
           to: "/inventory/raw-materials",
           label: "Raw Materials",
           roles: ["admin", "manager", "inventory"],
+        },
+      ],
+    },
+    {
+      label: "Purchasing",
+      icon: <ShoppingCart size={20} />,
+      roles: ["admin", "manager", "inventory", "accountant"],
+      category: "purchasing",
+      submenu: [
+        {
+          to: "/purchases",
+          label: "Purchases",
+          roles: ["admin", "manager", "inventory", "accountant"],
+        },
+        {
+          to: "/purchases/new",
+          label: "New Purchase",
+          roles: ["admin", "manager", "inventory"],
+        },
+        {
+          to: "/purchases/suppliers",
+          label: "Suppliers",
+          roles: ["admin", "manager", "inventory", "accountant"],
         },
       ],
     },
@@ -145,8 +155,8 @@ export default function Sidebar({ isOpen, onClose }) {
       roles: ["admin", "manager", "sales", "accountant"],
     },
     {
-      label: "Access",
-      icon: <User size={20} />,
+      label: "Settings",
+      icon: <Settings size={20} />,
       roles: ["admin"],
       category: "users",
       submenu: [
@@ -224,22 +234,29 @@ export default function Sidebar({ isOpen, onClose }) {
             )}
           </button>
 
-          {/* Expanded Submenu */}
-          {isExpanded && !collapsed && (
-            <div className="mt-1 space-y-1 px-3">
-              {allowedSubmenu.map((sub) => (
-                <NavLink
-                  key={sub.to}
-                  to={sub.to}
-                  className={({ isActive }) =>
-                    `${subLinkBase} flex items-center gap-2 ${isActive ? subLinkActive : ""}`
-                  }
-                  onClick={onClose}
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full ${sub.label === 'Active' ? 'bg-current' : 'bg-gray-300 dark:bg-slate-600'}`}></span>
-                  {sub.label}
-                </NavLink>
-              ))}
+          {/* Expanded Submenu - Smooth Transition */}
+          {!collapsed && (
+            <div
+              className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                }`}
+            >
+              <div className="overflow-hidden">
+                <div className="mt-1 space-y-1 px-3 pb-1">
+                  {allowedSubmenu.map((sub) => (
+                    <NavLink
+                      key={sub.to}
+                      to={sub.to}
+                      className={({ isActive }) =>
+                        `${subLinkBase} flex items-center gap-2 ${isActive ? subLinkActive : ""}`
+                      }
+                      onClick={onClose}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${sub.label === 'Active' ? 'bg-current' : 'bg-gray-300 dark:bg-slate-600'}`}></span>
+                      {sub.label}
+                    </NavLink>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -299,8 +316,8 @@ export default function Sidebar({ isOpen, onClose }) {
           </div>
         </div>
 
-        {/* Scrollable Nav */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-slate-800">
+        {/* Scrollable Nav - Hidden Scrollbar & Smooth Transitions */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
           <nav className="flex flex-col gap-1">
             {allowedItems.map((n) => renderNavItem(n))}
           </nav>
@@ -348,7 +365,7 @@ export default function Sidebar({ isOpen, onClose }) {
             <div className="text-lg font-bold text-gray-900 dark:text-white">BlackDiamond</div>
           </div>
 
-          <div className="px-4 py-6 overflow-y-auto h-[calc(100vh-80px)]">
+          <div className="px-4 py-6 overflow-y-auto h-[calc(100vh-80px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
             <nav className="flex flex-col gap-1">
               {allowedItems.map((n) => renderNavItem(n))}
             </nav>

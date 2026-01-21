@@ -11,6 +11,7 @@ export default function Products() {
   const [materialId, setMaterialId] = useState("");
   const [retailPrice, setRetailPrice] = useState(0);
   const [wholesalePrice, setWholesalePrice] = useState(0);
+  const [initialStock, setInitialStock] = useState(0);
   const [attributesValues, setAttributesValues] = useState({});
 
   const [q, setQ] = useState("");
@@ -66,6 +67,7 @@ export default function Products() {
         attributes: attributesValues,
         retailPrice: Number(retailPrice || 0),
         wholesalePrice: Number(wholesalePrice || 0),
+        initialStock: Number(initialStock || 0),
       };
 
       if (editingId) {
@@ -78,6 +80,7 @@ export default function Products() {
 
       setRetailPrice(0);
       setWholesalePrice(0);
+      setInitialStock(0);
       setAttributesValues({});
       setEditingId(null);
       setMaterialId("");
@@ -94,6 +97,7 @@ export default function Products() {
     setMaterialId("");
     setRetailPrice(0);
     setWholesalePrice(0);
+    setInitialStock(0);
     setAttributesValues({});
   };
 
@@ -211,6 +215,19 @@ export default function Products() {
                 />
               </div>
 
+              {!editingId && (
+                <div className="lg:col-span-4">
+                  <div className="text-xs text-gray-500 mb-2">Initial Stock</div>
+                  <input
+                    type="number"
+                    value={initialStock}
+                    onChange={(e) => setInitialStock(Number(e.target.value))}
+                    className="mt-1 w-full rounded-xl border bg-gray-50 px-3 py-2.5 text-sm outline-none focus:border-gray-300"
+                    min={0}
+                  />
+                </div>
+              )}
+
               <div className="lg:col-span-4 flex items-end gap-2">
                 <button
                   disabled={saving}
@@ -319,6 +336,6 @@ export default function Products() {
           })()}
         </div>
       </div>
-    </div>
+    </div >
   );
 }

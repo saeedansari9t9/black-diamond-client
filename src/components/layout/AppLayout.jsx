@@ -7,15 +7,14 @@ export default function AppLayout() {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
-      <div className="flex">
-        <Sidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <div className="flex-1">
-          <Topbar onToggleSidebar={() => setSidebarOpen((v) => !v)} />
-          <main className="p-6">
-            <Outlet />
-          </main>
-        </div>
+    <div className="flex h-screen overflow-hidden bg-gray-50 text-gray-900">
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+        <Topbar onToggleSidebar={() => setSidebarOpen((v) => !v)} />
+        <main className="flex-1 p-6">
+          <Outlet />
+        </main>
       </div>
     </div>
   );

@@ -93,9 +93,6 @@ export default function SalesReport() {
               {loading ? "Loading..." : "Run Report"}
             </button>
           </div>
-          <div className="flex items-end text-xs text-gray-500">
-            Tip: same day report ke liye from=to
-          </div>
         </div>
       </div>
 
