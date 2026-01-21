@@ -65,28 +65,28 @@ export default function InvoicePrint() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between no-print">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between no-print p-2 sm:p-0">
         <div>
-          <div className="text-xl font-bold">Invoice Preview</div>
+          <div className="text-lg sm:text-xl font-bold">Invoice Preview</div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => window.print()}
-            className="rounded-xl bg-gray-900 px-6 py-2 text-sm font-semibold text-white hover:bg-black shadow-lg"
+            className="flex-1 sm:flex-none rounded-xl bg-gray-900 px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-black shadow-lg"
           >
-            Print Invoice
+            Print
           </button>
           <button
             onClick={handleSavePDF}
             disabled={generatingPdf}
-            className="rounded-xl border border-gray-300 bg-white px-6 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 shadow-sm disabled:opacity-50"
+            className="flex-1 sm:flex-none rounded-xl border border-gray-300 bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-50 shadow-sm disabled:opacity-50"
           >
-            {generatingPdf ? "Saving..." : "Save as PDF"}
+            {generatingPdf ? "Saving..." : "Save PDF"}
           </button>
           <button
             onClick={() => window.history.back()}
-            className="rounded-xl border bg-white px-4 py-2 text-sm hover:bg-gray-50 ml-2"
+            className="flex-1 sm:flex-none rounded-xl border bg-white px-4 py-2 text-xs sm:text-sm hover:bg-gray-50"
           >
             Back
           </button>
@@ -94,12 +94,12 @@ export default function InvoicePrint() {
       </div>
 
       {/* Printable Area - A4 Standard */}
-      <div className="flex justify-center overflow-auto bg-gray-100 p-8 print:p-0 print:bg-white print:overflow-visible">
-        <div className="shadow-xl print:shadow-none">
+      <div className="flex justify-center overflow-hidden bg-gray-100 p-2 sm:p-8 print:p-0 print:bg-white print:overflow-visible">
+        <div className="origin-top scale-[0.38] shadow-xl sm:scale-[0.6] md:scale-[0.75] lg:scale-[0.85] print:transform-none print:shadow-none">
           <div
             id="invoice-print-area"
-            className="bg-white text-gray-900 flex flex-col justify-between"
-            style={{ width: '210mm', minHeight: '296mm', padding: '15mm 20mm' }}
+            className="bg-white text-gray-900 flex flex-col"
+            style={{ width: '210mm', minHeight: 'auto', padding: '15mm 20mm' }}
           >
             <style>{`
               @page { size: A4 portrait; margin: 0; }
@@ -122,14 +122,14 @@ export default function InvoicePrint() {
                   left: 0;
                   top: 0;
                   width: 210mm;
-                  min-height: 297mm;
+                  min-height: 297mm !important;
                   margin: 0;
                   padding: 15mm 20mm !important;
                   z-index: 9999;
                   background: white;
-                  display: flex;
-                  flex-direction: column;
-                  justify-content: space-between;
+                  display: flex !important;
+                  flex-direction: column !important;
+                  justify-content: space-between !important;
                 }
                 .no-print { display: none !important; }
               }

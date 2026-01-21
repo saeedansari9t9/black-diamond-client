@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { api } from "../../api/axios";
 import { useAuthStore } from "../../store/authStore";
 import { useNavigate } from "react-router-dom";
@@ -7,6 +8,7 @@ export default function Login() {
   const [email, setEmail] = useState("admin@blackdiamond.com");
   const [password, setPassword] = useState("Admin@12345");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [err, setErr] = useState("");
 
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -135,14 +137,23 @@ export default function Login() {
                       Forgot?
                     </button>
                   </div>
-                  <input
-                    className="mt-1 w-full rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-white/25"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    type="password"
-                    autoComplete="current-password"
-                  />
+                  <div className="relative mt-1">
+                    <input
+                      className="w-full rounded-2xl border border-white/10 bg-slate-950/40 pl-4 pr-12 py-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-white/25"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="current-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
 
                 <button
