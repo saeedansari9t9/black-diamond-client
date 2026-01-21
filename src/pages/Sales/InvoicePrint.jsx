@@ -85,6 +85,12 @@ export default function InvoicePrint() {
             {generatingPdf ? "Saving..." : "Save PDF"}
           </button>
           <button
+            onClick={() => window.location.href = `/sales/invoices/${id}/print/thermal`}
+            className="flex-1 sm:flex-none rounded-xl border border-gray-300 bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-50 shadow-sm"
+          >
+            Thermal
+          </button>
+          <button
             onClick={() => window.history.back()}
             className="flex-1 sm:flex-none rounded-xl border bg-white px-4 py-2 text-xs sm:text-sm hover:bg-gray-50"
           >

@@ -10,6 +10,7 @@ import Settings from "./pages/Settings/Settings";
 import SalesNew from "./pages/Sales/SalesNew";
 import CustomerDetail from "./pages/Customers/CustomerDetail";
 import InvoicePrint from "./pages/Sales/InvoicePrint";
+import InvoicePrintThermal from "./pages/Sales/InvoicePrintThermal";
 import Invoices from "./pages/Sales/Invoices";
 import Customers from "./pages/Customers/Customers";
 import Materials from "./pages/Masters/Materials";
@@ -43,6 +44,7 @@ export default function App() {
           <Route path="/sales/new" element={<SalesNew />} />
           <Route path="/sales/invoices" element={<Invoices />} />
           <Route path="/sales/invoices/:id/print" element={<InvoicePrint />} />
+          <Route path="/sales/invoices/:id/print/thermal" element={<InvoicePrintThermal />} />
           <Route path="/customers" element={<Customers />} />
           <Route path="/customers/:id" element={<CustomerDetail />} />
           <Route path="/masters/materials" element={<Materials />} />
