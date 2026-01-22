@@ -56,12 +56,17 @@ export default function Sidebar({ isOpen, onClose }) {
       submenu: [
         {
           to: "/masters/materials",
-          label: "Materials",
+          label: "Add Materials",
           roles: ["admin", "manager", "sales", "accountant", "inventory"],
         },
         {
+          to: "/inventory/raw-materials",
+          label: "Add Raw Materials",
+          roles: ["admin", "manager", "inventory"],
+        },
+        {
           to: "/masters/products",
-          label: "Products",
+          label: "Add Products",
           roles: ["admin", "manager", "sales", "inventory"],
         },
       ],
@@ -74,12 +79,12 @@ export default function Sidebar({ isOpen, onClose }) {
       submenu: [
         {
           to: "/sales/new",
-          label: "New Sale",
+          label: "Add New Sale",
           roles: ["admin", "manager", "sales", "accountant"],
         },
         {
           to: "/sales/invoices",
-          label: "All Invoices",
+          label: "All Invoices List",
           roles: ["admin", "manager", "sales", "accountant"],
         },
       ],
@@ -92,22 +97,17 @@ export default function Sidebar({ isOpen, onClose }) {
       submenu: [
         {
           to: "/inventory/stock",
-          label: "Current Stock",
+          label: "View Current Stock",
           roles: ["admin", "manager", "inventory", "sales"],
         },
         {
           to: "/inventory/production",
-          label: "Production Entry",
+          label: "Stock Production Entry",
           roles: ["admin", "manager", "inventory"],
         },
         {
           to: "/inventory/adjust-stock",
-          label: "Adjust Stock",
-          roles: ["admin", "manager", "inventory"],
-        },
-        {
-          to: "/inventory/raw-materials",
-          label: "Raw Materials",
+          label: "Add/Remove Stock",
           roles: ["admin", "manager", "inventory"],
         },
       ],
@@ -120,17 +120,17 @@ export default function Sidebar({ isOpen, onClose }) {
       submenu: [
         {
           to: "/purchases",
-          label: "Purchases",
+          label: "Purchases List",
           roles: ["admin", "manager", "inventory", "accountant"],
         },
         {
           to: "/purchases/new",
-          label: "New Purchase",
+          label: "Add New Purchase",
           roles: ["admin", "manager", "inventory"],
         },
         {
           to: "/purchases/suppliers",
-          label: "Suppliers",
+          label: "Suppliers List",
           roles: ["admin", "manager", "inventory", "accountant"],
         },
       ],

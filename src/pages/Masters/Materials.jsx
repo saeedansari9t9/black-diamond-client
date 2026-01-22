@@ -12,6 +12,8 @@ export default function Materials() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  const [showForm, setShowForm] = useState(false);
+
   const load = async () => {
     setLoading(true);
     try {
@@ -26,6 +28,7 @@ export default function Materials() {
 
   const handleSubmit = async () => {
     if (!name.trim()) return toast.error("Material name required");
+    if (!attributes.length) return toast.error("At least one attribute is required");
     setSaving(true);
     try {
       // normalize attributes: split options by comma
@@ -54,6 +57,7 @@ export default function Materials() {
       setName("");
       setAttributes([]);
       setEditingId(null);
+      setShowForm(false);
       await load();
     } catch (e) {
       toast.error(e?.response?.data?.message || "Failed");
@@ -66,6 +70,7 @@ export default function Materials() {
     setEditingId(null);
     setName("");
     setAttributes([]);
+    setShowForm(false);
   };
 
   const openEdit = (m) => {
@@ -76,6 +81,14 @@ export default function Materials() {
       ...a,
       options: (a.options || []).join(", ")
     })));
+    setShowForm(true);
+  };
+
+  const openNew = () => {
+    setName("");
+    setAttributes([{ key: 'prodName', label: 'Product Name', type: 'text', required: true, options: '' }]);
+    setEditingId(null);
+    setShowForm(true);
   };
 
   const handleDelete = async (id) => {
@@ -103,62 +116,104 @@ export default function Materials() {
   return (
     <div className="space-y-5">
       <Toaster position="top-center" />
-      <div>
+      <div className="flex items-center justify-between">
         <div className="text-xl font-bold">Materials</div>
+        {!showForm && (
+          <button
+            onClick={openNew}
+            className="flex items-center gap-2 rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black"
+          >
+            <CirclePlus size={18} /> Add New Material
+          </button>
+        )}
       </div>
 
-      <div className="rounded-2xl border bg-white p-4 shadow-sm">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div>
-            <div className="text-xs text-gray-500">Material name</div>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. viscose"
-              className="mt-1 w-full rounded-xl border bg-gray-50 px-3 py-2.5 text-sm outline-none focus:border-gray-300"
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <div className="text-xs text-gray-500">Attributes (optional)</div>
-            <div className="space-y-2 mt-2">
-              {attributes.map((a, idx) => (
-                <div key={idx} className="grid grid-cols-12 gap-2 items-center">
-                  <input value={a.key || ''} onChange={(e) => { const copy = [...attributes]; copy[idx].key = e.target.value; setAttributes(copy) }} placeholder="key" className="col-span-2 rounded-xl border px-2 py-1" />
-                  <input value={a.label || ''} onChange={(e) => { const copy = [...attributes]; copy[idx].label = e.target.value; setAttributes(copy) }} placeholder="label" className="col-span-3 rounded-xl border px-2 py-1" />
-                  <select value={a.type || 'text'} onChange={(e) => { const copy = [...attributes]; copy[idx].type = e.target.value; setAttributes(copy) }} className="col-span-2 rounded-xl border px-2 py-1">
-                    <option value="text">text</option>
-                    <option value="number">number</option>
-                    <option value="select">select</option>
-                  </select>
-                  <input value={a.options || ''} onChange={(e) => { const copy = [...attributes]; copy[idx].options = e.target.value; setAttributes(copy) }} placeholder="options (comma)" className="col-span-3 rounded-xl border px-2 py-1" />
-                  <label className="col-span-1 text-sm"> <input type="checkbox" checked={!!a.required} onChange={(e) => { const copy = [...attributes]; copy[idx].required = e.target.checked; setAttributes(copy) }} /> Req</label>
-                  <button onClick={() => { setAttributes(attributes.filter((_, i) => i !== idx)) }} className="col-span-1 text-sm text-red-600">Remove</button>
+      {showForm && (
+        <div className="rounded-2xl border bg-white p-4 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <div className="text-xs text-gray-500">Material name</div>
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. viscose"
+                className="mt-1 w-full rounded-xl border bg-gray-50 px-3 py-2.5 text-sm outline-none focus:border-gray-300"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <div className="text-xs text-gray-500">Attributes</div>
+              <div className="space-y-2 mt-2">
+                {attributes.map((a, idx) => (
+                  <div key={idx} className="grid grid-cols-12 gap-2 items-center">
+                    <input
+                      value={a.key || ''}
+                      disabled={a.key === 'prodName'}
+                      onChange={(e) => { const copy = [...attributes]; copy[idx].key = e.target.value; setAttributes(copy) }}
+                      placeholder="key"
+                      className={`col-span-2 rounded-xl border px-2 py-1 ${a.key === 'prodName' ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}
+                    />
+                    <input
+                      value={a.label || ''}
+                      disabled={a.key === 'prodName'}
+                      onChange={(e) => { const copy = [...attributes]; copy[idx].label = e.target.value; setAttributes(copy) }}
+                      placeholder="label"
+                      className={`col-span-3 rounded-xl border px-2 py-1 ${a.key === 'prodName' ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}
+                    />
+                    <select
+                      value={a.type || 'text'}
+                      disabled={a.key === 'prodName'}
+                      onChange={(e) => { const copy = [...attributes]; copy[idx].type = e.target.value; setAttributes(copy) }}
+                      className={`col-span-2 rounded-xl border px-2 py-1 ${a.key === 'prodName' ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}
+                    >
+                      <option value="text">text</option>
+                      <option value="number">number</option>
+                      <option value="select">select</option>
+                    </select>
+                    <input
+                      value={a.options || ''}
+                      disabled={a.key === 'prodName'}
+                      onChange={(e) => { const copy = [...attributes]; copy[idx].options = e.target.value; setAttributes(copy) }}
+                      placeholder="options (comma)"
+                      className={`col-span-3 rounded-xl border px-2 py-1 ${a.key === 'prodName' ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}
+                    />
+                    <label className="col-span-1 text-sm flex items-center gap-1">
+                      <input
+                        type="checkbox"
+                        disabled={a.key === 'prodName'}
+                        checked={!!a.required}
+                        onChange={(e) => { const copy = [...attributes]; copy[idx].required = e.target.checked; setAttributes(copy) }}
+                      /> Req
+                    </label>
+                    <div className="col-span-1">
+                      {a.key !== 'prodName' && (
+                        <button onClick={() => { setAttributes(attributes.filter((_, i) => i !== idx)) }} className="text-sm text-red-600 hover:text-red-700">Remove</button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                <div>
+                  <button onClick={() => setAttributes([...attributes, { key: '', label: '', type: 'text', required: false, options: '' }])} className="rounded-xl bg-gray-100 px-3 py-1 text-sm">Add attribute</button>
                 </div>
-              ))}
-              <div>
-                <button onClick={() => setAttributes([...attributes, { key: '', label: '', type: 'text', required: false, options: '' }])} className="rounded-xl bg-gray-100 px-3 py-1 text-sm">Add attribute</button>
               </div>
             </div>
-          </div>
-          <div className="flex items-end">
-            <button
-              disabled={saving}
-              onClick={handleSubmit}
-              className="w-full rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-black disabled:opacity-60"
-            >
-              {saving ? "Saving..." : (editingId ? "Update Material" : "Add Material")}
-            </button>
-            {editingId && (
+            <div className="flex items-end flex-col sm:flex-row sm:gap-2 w-full sm:col-span-2 pt-2">
+              <button
+                disabled={saving}
+                onClick={handleSubmit}
+                className="w-full sm:w-auto rounded-xl bg-gray-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-black disabled:opacity-60"
+              >
+                {saving ? "Saving..." : (editingId ? "Update Material" : "Save Material")}
+              </button>
               <button
                 onClick={cancelEdit}
-                className="w-full mt-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                className="w-full sm:w-auto mt-2 sm:mt-0 rounded-xl border border-gray-300 bg-white px-6 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
               >
-                Cancel Edit
+                Cancel
               </button>
-            )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="rounded-2xl border bg-white shadow-sm">
         <div className="border-b bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-600">List</div>
