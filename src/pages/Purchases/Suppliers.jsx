@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Pencil, Trash2 } from "lucide-react";
 import { getSuppliers, createSupplier, updateSupplier, deleteSupplier } from "../../api/suppliers";
 import toast, { Toaster } from 'react-hot-toast';
 import Swal from 'sweetalert2';
 
 export default function Suppliers() {
+    const nav = useNavigate();
     const [suppliers, setSuppliers] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -202,14 +204,20 @@ export default function Suppliers() {
 
                             <div className="text-xs text-gray-400 mt-2 sm:mt-0 flex gap-2 self-end sm:self-center">
                                 <button
+                                    onClick={() => nav(`/purchases/suppliers/${s._id}/ledger`)}
+                                    className="flex items-center gap-1 rounded-lg bg-green-50 border border-green-100 px-3 py-1.5 text-xs font-semibold text-green-700 shadow-sm transition-colors hover:bg-green-100 hover:border-green-200"
+                                >
+                                    Ledger
+                                </button>
+                                <button
                                     onClick={() => openEdit(s)}
-                                    className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition-colors hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
+                                    className="flex items-center gap-1 rounded-lg bg-blue-50 border border-blue-100 px-3 py-1.5 text-xs font-semibold text-blue-700 shadow-sm transition-colors hover:bg-blue-100 hover:border-blue-200"
                                 >
                                     <Pencil size={14} /> Edit
                                 </button>
                                 <button
                                     onClick={() => handleDelete(s._id)}
-                                    className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition-colors hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                                    className="flex items-center gap-1 rounded-lg bg-red-50 border border-red-100 px-3 py-1.5 text-xs font-semibold text-red-700 shadow-sm transition-colors hover:bg-red-100 hover:border-red-200"
                                 >
                                     <Trash2 size={14} /> Delete
                                 </button>

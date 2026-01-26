@@ -52,12 +52,12 @@ export default function Stock() {
           >
             Adjust Stock
           </Link>
-          <Link
+          {/* <Link
             to="/purchases/new"
             className="rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black"
           >
             + Add Stock (Purchase)
-          </Link>
+          </Link> */}
         </div>
       </div>
 

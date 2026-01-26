@@ -35,8 +35,7 @@ export default function NewPurchase() {
   const [unit, setUnit] = useState("kg");
   const [price, setPrice] = useState("");
 
-  // Cart
-  const [items, setItems] = useState([]);
+  // No Cart, Single Item Logic
 
   // Status
   const [saving, setSaving] = useState(false);
@@ -61,137 +60,72 @@ export default function NewPurchase() {
     }
   }, [materialId, isNewMaterial]);
 
-  const addToCart = async () => {
-    setErr("");
-
-    // Handle New Material Creation on-the-fly? 
-    // No, better to create it ONLY when saving the purchase to avoid junk data?
-    // Actually, distinct items might have different new materials. 
-    // Let's defer creation to "Save Purchase" OR create now?
-    // Simpler: If "isNewMaterial" is active, we just store the "name" in list item, 
-    // and create it during savePurchase? OR we create it *right now* to get an ID?
-    // Let's create it *right now* so it becomes a "real" material immediately. 
-    // This allows re-selecting it for next item.
-
-    let finalMaterialId = materialId;
-    let finalMaterialName = "";
-
-    if (isNewMaterial) {
-      if (!newMaterialName.trim()) return setErr("Material Name is required");
-
-      try {
-        // Create backend material
-        const mRes = await createRawMaterial({
-          name: newMaterialName,
-          attributes: newAttributes
-        });
-        const newMat = mRes.data; // { _id, name, ... }
-
-        // Add to local list
-        setMaterials(prev => [...prev, newMat]);
-        finalMaterialId = newMat._id;
-        finalMaterialName = newMat.name;
-
-        // Switch mode
-        setIsNewMaterial(false);
-        setNewMaterialName("");
-        setNewAttributes([]);
-        setMaterialId(finalMaterialId);
-
-        // Don't return yet, continue to add to list using this new ID
-      } catch (e) {
-        return setErr("Failed to create material: " + e.message);
-      }
-    } else {
-      const selectedMat = materials.find(m => m._id === materialId);
-      if (selectedMat) finalMaterialName = selectedMat.name;
-    }
-
-    if (!finalMaterialId) return setErr("Select a material");
-    if (!qty || Number(qty) <= 0) return setErr("Enter valid quantity");
-    if (!price || Number(price) < 0) return setErr("Enter valid price");
-
-    setItems(prev => [
-      ...prev,
-      {
-        id: Date.now(), // temp id
-        materialId: finalMaterialId || null,
-        description: finalMaterialName,
-        qty: Number(qty),
-        unit,
-        price: Number(price),
-        attributes: { ...itemAttributes } // Copy attributes
-      }
-    ]);
-
-    // Reset inputs but keep material selected.
-    setQty("");
-    setPrice("");
-    setItemAttributes({});
-  };
-
-  const removeItem = (id) => {
-    setItems(prev => prev.filter(x => x.id !== id));
-  };
-
-  const subTotal = items.reduce((s, it) => s + (it.qty * it.price), 0);
+  // Calculations for current single item
+  const currentQty = Number(qty) || 0;
+  const currentPrice = Number(price) || 0;
+  const lineTotal = currentQty * currentPrice;
+  const subTotal = lineTotal;
   const grandTotal = subTotal;
-  const dueAmount = Math.max(0, grandTotal - paidAmount);
+  const dueAmount = Math.max(0, grandTotal - Number(paidAmount || 0));
 
   const savePurchase = async () => {
     setSaving(true);
     setErr("");
     setMsg("");
     try {
-      if (items.length === 0) {
-        setErr("Add at least 1 item");
-        return;
-      }
+      // 1. Prepare Material Info
+      let finalMaterialId = materialId;
+      let finalMaterialName = "";
 
-      let finalSupplierId = supplierId;
-
-      if (isNewSupplier) {
-        if (!newSupplierName.trim()) {
-          setErr("Supplier Name is required");
-          setSaving(false);
-          return;
-        }
-        // Create Supplier first
+      if (isNewMaterial) {
+        if (!newMaterialName.trim()) { setSaving(false); return setErr("Material Name is required"); }
         try {
-          const splRes = await api.post("/suppliers", {
-            name: newSupplierName,
-            phone: newSupplierPhone
-          });
-          finalSupplierId = splRes.data.data._id;
+          const mRes = await createRawMaterial({ name: newMaterialName, attributes: newAttributes });
+          finalMaterialId = mRes.data._id;
+          finalMaterialName = mRes.data.name;
         } catch (e) {
-          setErr("Failed to create supplier: " + (e?.response?.data?.message || e.message));
-          setSaving(false);
-          return;
+          setSaving(false); return setErr("Failed to create material: " + e.message);
         }
       } else {
-        if (!finalSupplierId) {
-          setErr("Please select a supplier or add a new one");
-          setSaving(false);
-          return;
-        }
+        const selectedMat = materials.find(m => m._id === materialId);
+        if (selectedMat) finalMaterialName = selectedMat.name;
       }
 
+      if (!finalMaterialId) { setSaving(false); return setErr("Select a material"); }
+      if (currentQty <= 0) { setSaving(false); return setErr("Enter valid quantity"); }
+      if (currentPrice < 0) { setSaving(false); return setErr("Enter valid price"); }
+
+      // 2. Prepare Supplier Info
+      let finalSupplierId = supplierId;
+      if (isNewSupplier) {
+        if (!newSupplierName.trim()) { setSaving(false); return setErr("Supplier Name is required"); }
+        try {
+          const splRes = await api.post("/suppliers", { name: newSupplierName, phone: newSupplierPhone });
+          finalSupplierId = splRes.data.data._id;
+        } catch (e) {
+          setSaving(false); return setErr("Failed to create supplier: " + (e?.response?.data?.message || e.message));
+        }
+      } else {
+        if (!finalSupplierId) { setSaving(false); return setErr("Please select a supplier"); }
+      }
+
+      // 3. Payload
       const payload = {
         supplierId: finalSupplierId,
-        items: items.map((it) => ({
-          materialId: it.materialId,
-          description: it.description,
-          qty: it.qty,
-          unit: it.unit,
-          price: it.price,
-          attributes: it.attributes,
-        })),
+        items: [{
+          materialId: finalMaterialId || null,
+          description: finalMaterialName,
+          qty: currentQty,
+          unit,
+          price: currentPrice,
+          attributes: { ...itemAttributes }, // Copy attributes
+        }],
         paymentMethod,
         paidAmount: Number(paidAmount || 0),
         note: note.trim(),
       };
 
-      const res = await createPurchase(payload);
+      await createPurchase(payload);
       nav(`/purchases`);
     } catch (e) {
       setErr(e?.response?.data?.message || "Failed to save purchase");
@@ -204,16 +138,9 @@ export default function NewPurchase() {
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold">New Purchase (Raw Material)</h1>
-          <p className="text-sm text-gray-500">Record material expenses. Does NOT add to Product Stock.</p>
+          <h1 className="text-xl font-bold">New Purchase Entry</h1>
+          <p className="text-sm text-gray-500">Record single material purchase</p>
         </div>
-        <button
-          onClick={savePurchase}
-          disabled={saving}
-          className="rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black disabled:opacity-60"
-        >
-          {saving ? "Saving..." : "Save Purchase"}
-        </button>
       </div>
 
       {err && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-800 border-red-200 border">{err}</div>}
@@ -273,7 +200,7 @@ export default function NewPurchase() {
 
           {/* Item Entry */}
           <div className="rounded-2xl border bg-white p-4 shadow-sm">
-            <h3 className="text-sm font-semibold mb-3">Add Item</h3>
+            <h3 className="text-sm font-semibold mb-3">Item Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
               <div className="md:col-span-3">
                 <div className="flex items-center justify-between">
@@ -430,48 +357,14 @@ export default function NewPurchase() {
                 />
               </div>
             </div>
-            <button
-              onClick={addToCart}
-              className="mt-3 w-full rounded-xl border-2 border-dashed border-gray-300 p-2 text-sm font-medium text-gray-600 hover:border-gray-400 hover:text-gray-800"
-            >
-              + Add to List
-            </button>
-          </div>
 
-          {/* List */}
-          <div className="rounded-2xl border bg-white p-4 shadow-sm overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-left text-xs text-gray-500">
-                <tr>
-                  <th className="px-3 py-2">Material</th>
-                  <th className="px-3 py-2">Qty</th>
-                  <th className="px-3 py-2">Rate</th>
-                  <th className="px-3 py-2">Total</th>
-                  <th className="px-3 py-2"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {items.map(it => (
-                  <tr key={it.id}>
-                    <td className="px-3 py-2">
-                      <div className="font-semibold">{it.description}</div>
-                      {it.attributes && Object.keys(it.attributes).length > 0 && (
-                        <div className="text-xs text-gray-500">
-                          {Object.entries(it.attributes).map(([k, v]) => `${k}: ${v}`).join(", ")}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-3 py-2">{it.qty} {it.unit}</td>
-                    <td className="px-3 py-2">{it.price}</td>
-                    <td className="px-3 py-2 font-medium">{money(it.qty * it.price)}</td>
-                    <td className="px-3 py-2 text-right">
-                      <button onClick={() => removeItem(it.id)} className="text-red-500 hover:text-red-700">✕</button>
-                    </td>
-                  </tr>
-                ))}
-                {items.length === 0 && <tr><td colSpan={5} className="p-4 text-center text-gray-400">No items added</td></tr>}
-              </tbody>
-            </table>
+            {/* Total Display for Item */}
+            <div className="mt-4 flex justify-end">
+              <div className="text-right">
+                <div className="text-xs text-gray-500">Item Total</div>
+                <div className="text-lg font-bold">{money(lineTotal)}</div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -480,10 +373,6 @@ export default function NewPurchase() {
           <div className="rounded-2xl border bg-white p-5 shadow-sm">
             <h3 className="font-semibold text-gray-900">Payment Details</h3>
             <div className="mt-4 space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Subtotal</span>
-                <span>{money(subTotal)}</span>
-              </div>
               <div className="flex justify-between text-base font-bold text-gray-900 border-t pt-2">
                 <span>Grand Total</span>
                 <span>{money(grandTotal)}</span>
@@ -517,6 +406,14 @@ export default function NewPurchase() {
                 <span className="text-red-600">{money(dueAmount)}</span>
               </div>
             </div>
+
+            <button
+              onClick={savePurchase}
+              disabled={saving}
+              className="mt-6 w-full rounded-xl bg-gray-900 px-4 py-3 text-sm font-bold text-white hover:bg-black disabled:opacity-60"
+            >
+              {saving ? "Saving..." : "Save Purchase"}
+            </button>
           </div>
         </div>
 

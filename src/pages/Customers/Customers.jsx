@@ -69,14 +69,22 @@ export default function Customers() {
           {rows.map((c) => (
             <button
               key={c._id}
-              onClick={() => nav(`/customers/${c._id}`)}
+              onClick={() => nav(`/customers/${c._id}/ledger`)}
               className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left hover:bg-gray-50"
             >
               <div>
                 <div className="text-sm font-semibold">{c.name}</div>
                 <div className="text-xs text-gray-500">{c.phone || "—"} • {c.address || "—"}</div>
               </div>
-              <span className="rounded-lg border px-3 py-1.5 text-sm">View</span>
+              <div className="flex gap-2">
+                <button
+                  onClick={(e) => { e.stopPropagation(); nav(`/customers/${c._id}/ledger`) }}
+                  className="rounded-lg border bg-green-50 text-green-700 px-3 py-1.5 text-sm font-medium hover:bg-green-100"
+                >
+                  Ledger
+                </button>
+                <span className="rounded-lg border px-3 py-1.5 text-sm">View</span>
+              </div>
             </button>
           ))}
           {!loading && rows.length === 0 ? (
@@ -97,7 +105,7 @@ export default function Customers() {
             </div>
 
             <div className="mt-4 grid grid-cols-1 gap-3">
-              {["name","phone","address","notes"].map((k) => (
+              {["name", "phone", "address", "notes"].map((k) => (
                 <div key={k}>
                   <div className="text-xs text-gray-500 capitalize">{k}</div>
                   <input

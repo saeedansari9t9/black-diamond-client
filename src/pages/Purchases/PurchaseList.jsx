@@ -49,6 +49,7 @@ export default function PurchaseList() {
                 <th className="px-3 py-3">Materials</th>
                 <th className="px-3 py-3 text-right">Total</th>
                 <th className="px-3 py-3 text-right">Due</th>
+                <th className="px-3 py-3 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -56,12 +57,28 @@ export default function PurchaseList() {
                 <tr key={p._id} className="hover:bg-gray-50">
                   <td className="px-3 py-3 font-semibold text-blue-600">{p.purchaseNo}</td>
                   <td className="px-3 py-3 text-gray-600">{dateFmt(p.createdAt)}</td>
-                  <td className="px-3 py-3">{p.supplierSnapshot?.name || "—"}</td>
+                  <td className="px-3 py-3">
+                    {p.supplierId ? (
+                      <Link to={`/purchases/suppliers/${p.supplierId._id || p.supplierId}/ledger`} className="hover:text-blue-600 hover:underline">
+                        {p.supplierSnapshot?.name || "—"}
+                      </Link>
+                    ) : (
+                      <span>{p.supplierSnapshot?.name || "—"}</span>
+                    )}
+                  </td>
                   <td className="px-3 py-3 text-gray-600 max-w-xs truncate">
                     {p.items?.map(i => `${i.description} (${i.qty}${i.unit})`).join(", ")}
                   </td>
                   <td className="px-3 py-3 text-right font-medium">{money(p.grandTotal)}</td>
                   <td className="px-3 py-3 text-right text-red-600">{money(p.dueAmount)}</td>
+                  <td className="px-3 py-3 text-right">
+                    <Link
+                      to={`/purchases/${p._id}`}
+                      className="rounded-lg border px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50"
+                    >
+                      View
+                    </Link>
+                  </td>
                 </tr>
               ))}
               {!loading && purchases.length === 0 && (

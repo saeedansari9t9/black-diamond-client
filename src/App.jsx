@@ -9,6 +9,7 @@ import Users from "./pages/Users/Users";
 import Settings from "./pages/Settings/Settings";
 import SalesNew from "./pages/Sales/SalesNew";
 import CustomerDetail from "./pages/Customers/CustomerDetail";
+import CustomerLedger from "./pages/Customers/CustomerLedger";
 import InvoicePrint from "./pages/Sales/InvoicePrint";
 import InvoicePrintThermal from "./pages/Sales/InvoicePrintThermal";
 import Invoices from "./pages/Sales/Invoices";
@@ -18,6 +19,8 @@ import Products from "./pages/Masters/Products";
 import Suppliers from "./pages/Purchases/Suppliers";
 import PurchaseList from "./pages/Purchases/PurchaseList";
 import NewPurchase from "./pages/Purchases/NewPurchase";
+import PurchaseDetail from "./pages/Purchases/PurchaseDetail";
+import SupplierLedger from "./pages/Purchases/SupplierLedger";
 import Stock from "./pages/Inventory/Stock";
 import AdjustStock from "./pages/Inventory/AdjustStock";
 import ProductionEntry from "./pages/Inventory/ProductionEntry";
@@ -47,14 +50,16 @@ export default function App() {
           <Route path="/sales/invoices/:id/print/thermal" element={<InvoicePrintThermal />} />
           <Route path="/customers" element={<Customers />} />
           <Route path="/customers/:id" element={<CustomerDetail />} />
+          <Route path="/customers/:id/ledger" element={<CustomerLedger />} />
           <Route path="/masters/materials" element={<Materials />} />
           <Route path="/masters/products" element={<Products />} />
 
           {/* Purchase Routes */}
           <Route path="/purchases" element={<PurchaseList />} />
           <Route path="/purchases/suppliers" element={<Suppliers />} />
+          <Route path="/purchases/suppliers/:id/ledger" element={<SupplierLedger />} />
           <Route path="/purchases/new" element={<NewPurchase />} />
-          {/* <Route path="/purchases/:id" element={<PurchaseDetail />} /> */}
+          <Route path="/purchases/:id" element={<PurchaseDetail />} />
 
           {/* Inventory Routes */}
           <Route path="/inventory/stock" element={<Stock />} />

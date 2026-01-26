@@ -41,6 +41,7 @@ export default function Users() {
 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "", role: "sales" });
+  const [editingId, setEditingId] = useState(null); // null = create mode
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
 
@@ -68,19 +69,48 @@ export default function Users() {
 
   const filteredCount = useMemo(() => rows.length, [rows]);
 
-  const createUser = async () => {
+  const handleSubmit = async () => {
     setErr("");
     setSaving(true);
     try {
-      await api.post("/users", form);
+      if (editingId) {
+        // Update
+        await api.put(`/users/${editingId}`, form);
+      } else {
+        // Create
+        await api.post("/users", form);
+      }
       setOpen(false);
-      setForm({ name: "", email: "", password: "", role: "sales" });
+      resetForm();
       await fetchUsers();
     } catch (e) {
-      setErr(e?.response?.data?.message || "Failed to create user");
+      setErr(e?.response?.data?.message || `Failed to ${editingId ? "update" : "create"} user`);
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleEdit = (u) => {
+    setEditingId(u._id);
+    setForm({ name: u.name, email: u.email, role: u.role, password: "" }); // password empty
+    setErr("");
+    setOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this user? This cannot be undone.")) return;
+    try {
+      await api.delete(`/users/${id}`);
+      fetchUsers();
+    } catch (e) {
+      alert("Failed to delete user");
+    }
+  };
+
+  const resetForm = () => {
+    setForm({ name: "", email: "", password: "", role: "sales" });
+    setEditingId(null);
+    setErr("");
   };
 
   const toggleActive = async (id, next) => {
@@ -108,7 +138,7 @@ export default function Users() {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setOpen(true)}
+            onClick={() => { resetForm(); setOpen(true); }}
             className="rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black"
           >
             + New User
@@ -198,14 +228,29 @@ export default function Users() {
                     {u.isActive ? <Badge tone="green">Active</Badge> : <Badge tone="red">Disabled</Badge>}
                   </td>
                   <td className="px-5 py-4 text-right">
-                    <button
-                      onClick={() => toggleActive(u._id, !u.isActive)}
-                      className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-100"
-                      disabled={u.role === "admin"} // optional: admin disable na ho
-                      title={u.role === "admin" ? "Admin cannot be disabled" : ""}
-                    >
-                      {u.isActive ? "Disable" : "Enable"}
-                    </button>
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => handleEdit(u)}
+                        className="rounded-lg border px-3 py-1 text-xs font-medium hover:bg-gray-100"
+                        title="Edit User"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => toggleActive(u._id, !u.isActive)}
+                        className={`rounded-lg border px-3 py-1 text-xs font-medium hover:bg-gray-100 ${u.isActive ? "text-orange-600" : "text-green-600"}`}
+                        disabled={u.role === "admin"}
+                      >
+                        {u.isActive ? "Disable" : "Enable"}
+                      </button>
+                      <button
+                        onClick={() => handleDelete(u._id)}
+                        className="rounded-lg border border-red-200 bg-red-50 text-red-600 px-3 py-1 text-xs font-medium hover:bg-red-100"
+                        disabled={u.role === "admin"}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -229,13 +274,21 @@ export default function Users() {
                   <div className="text-sm font-semibold">{u.name}</div>
                   <div className="text-xs text-gray-500">{u.email}</div>
                 </div>
-                <button
-                  onClick={() => toggleActive(u._id, !u.isActive)}
-                  className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-100"
-                  disabled={u.role === "admin"}
-                >
-                  {u.isActive ? "Disable" : "Enable"}
-                </button>
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={() => handleEdit(u)}
+                    className="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-100"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => toggleActive(u._id, !u.isActive)}
+                    className="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-100"
+                    disabled={u.role === "admin"}
+                  >
+                    {u.isActive ? "Disable" : "Enable"}
+                  </button>
+                </div>
               </div>
 
               <div className="mt-3 flex flex-wrap gap-2">
@@ -256,8 +309,8 @@ export default function Users() {
           <div className="w-full max-w-lg rounded-3xl bg-white p-5 shadow-xl">
             <div className="flex items-start justify-between">
               <div>
-                <div className="text-lg font-bold">Create User</div>
-                <div className="text-sm text-gray-500">Add accountant/sales/inventory users</div>
+                <div className="text-lg font-bold">{editingId ? "Edit User" : "Create User"}</div>
+                <div className="text-sm text-gray-500">{editingId ? "Update user details" : "Add accountant/sales/inventory users"}</div>
               </div>
               <button
                 onClick={() => setOpen(false)}
@@ -296,17 +349,14 @@ export default function Users() {
               </div>
 
               <div>
-                <div className="text-xs text-gray-500">Password</div>
+                <div className="text-xs text-gray-500">Password {editingId && "(Leave empty to keep current)"}</div>
                 <input
                   value={form.password}
                   onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
                   className="mt-1 w-full rounded-xl border bg-gray-50 px-3 py-2.5 text-sm outline-none focus:border-gray-300"
-                  placeholder="Set initial password"
+                  placeholder={editingId ? "New password (optional)" : "Set initial password"}
                   type="password"
                 />
-                <div className="mt-1 text-xs text-gray-400">
-                  Tip: user later change password feature add kar denge.
-                </div>
               </div>
 
               <div>
@@ -335,11 +385,11 @@ export default function Users() {
                 Cancel
               </button>
               <button
-                onClick={createUser}
-                disabled={saving}
+                onClick={handleSubmit}
+                disabled={saving || !form.name}
                 className="rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black disabled:opacity-60"
               >
-                {saving ? "Creating..." : "Create"}
+                {saving ? "Saving..." : (editingId ? "Update" : "Create")}
               </button>
             </div>
           </div>

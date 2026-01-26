@@ -256,7 +256,64 @@ export default function SalesNew() {
             ) : null}
           </div>
         </div>
+        <div className="rounded-2xl border bg-white p-4 shadow-sm xl:col-span-2">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+            <div className="md:col-span-2">
+              <div className="text-xs text-gray-500">Customer</div>
+              <select
+                value={customerId}
+                onChange={(e) => setCustomerId(e.target.value)}
+                className="mt-1 w-full rounded-xl border bg-gray-50 px-3 py-2 text-sm outline-none focus:border-gray-300"
+              >
+                <option value="">Walk-in</option>
+                {customers.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.name} {c.phone ? `(${c.phone})` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
 
+            <div>
+              <div className="text-xs text-gray-500">Sale Type</div>
+              <select
+                value={saleType}
+                onChange={(e) => setSaleType(e.target.value)}
+                className="mt-1 w-full rounded-xl border bg-gray-50 px-3 py-2 text-sm outline-none focus:border-gray-300"
+              >
+                <option value="retail">Retail</option>
+                <option value="wholesale">Wholesale</option>
+              </select>
+            </div>
+
+            <div>
+              <div className="text-xs text-gray-500">Payment</div>
+              <select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                className="mt-1 w-full rounded-xl border bg-gray-50 px-3 py-2 text-sm outline-none focus:border-gray-300"
+              >
+                <option value="cash">Cash</option>
+                <option value="credit">Credit</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="mt-3">
+            <div className="text-xs text-gray-500">Note</div>
+            <input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Optional note"
+              className="mt-1 w-full rounded-xl border bg-gray-50 px-3 py-2 text-sm outline-none focus:border-gray-300"
+            />
+          </div>
+        </div>
+
+      </div>
+
+      {/* Product picker + Cart */}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         {/* Cart */}
         <div className="rounded-2xl border bg-white p-4 shadow-sm xl:col-span-2">
           <div className="flex items-center justify-between">
@@ -410,63 +467,7 @@ export default function SalesNew() {
             ) : null}
           </div>
         </div>
-      </div>
-
-      {/* Product picker + Cart */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <div className="rounded-2xl border bg-white p-4 shadow-sm xl:col-span-2">
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-            <div className="md:col-span-2">
-              <div className="text-xs text-gray-500">Customer</div>
-              <select
-                value={customerId}
-                onChange={(e) => setCustomerId(e.target.value)}
-                className="mt-1 w-full rounded-xl border bg-gray-50 px-3 py-2 text-sm outline-none focus:border-gray-300"
-              >
-                <option value="">Walk-in</option>
-                {customers.map((c) => (
-                  <option key={c._id} value={c._id}>
-                    {c.name} {c.phone ? `(${c.phone})` : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <div className="text-xs text-gray-500">Sale Type</div>
-              <select
-                value={saleType}
-                onChange={(e) => setSaleType(e.target.value)}
-                className="mt-1 w-full rounded-xl border bg-gray-50 px-3 py-2 text-sm outline-none focus:border-gray-300"
-              >
-                <option value="retail">Retail</option>
-                <option value="wholesale">Wholesale</option>
-              </select>
-            </div>
-
-            <div>
-              <div className="text-xs text-gray-500">Payment</div>
-              <select
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className="mt-1 w-full rounded-xl border bg-gray-50 px-3 py-2 text-sm outline-none focus:border-gray-300"
-              >
-                <option value="cash">Cash</option>
-                <option value="credit">Credit</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="mt-3">
-            <div className="text-xs text-gray-500">Note</div>
-            <input
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Optional note"
-              className="mt-1 w-full rounded-xl border bg-gray-50 px-3 py-2 text-sm outline-none focus:border-gray-300"
-            />
-          </div>
-        </div>
+        
 
         {/* Totals */}
         <div className="rounded-2xl border bg-white p-4 shadow-sm">
