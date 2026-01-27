@@ -5,8 +5,8 @@ import { useAuthStore } from "../../store/authStore";
 import { useNavigate } from "react-router-dom";
 
 export default function Login() {
-  const [email, setEmail] = useState("admin@blackdiamond.com");
-  const [password, setPassword] = useState("Admin@12345");
+  const [email, setEmail] = useState();
+  const [password, setPassword] = useState();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [err, setErr] = useState("");
