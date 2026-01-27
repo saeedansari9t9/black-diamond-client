@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import toast, { Toaster } from 'react-hot-toast';
+import Swal from 'sweetalert2';
 import { api } from "../../api/axios";
 import { useAuthStore } from "../../store/authStore";
 
@@ -98,12 +100,24 @@ export default function Users() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this user? This cannot be undone.")) return;
-    try {
-      await api.delete(`/users/${id}`);
-      fetchUsers();
-    } catch (e) {
-      alert("Failed to delete user");
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await api.delete(`/users/${id}`);
+        toast.success("User deleted successfully");
+        fetchUsers();
+      } catch (e) {
+        toast.error("Failed to delete user");
+      }
     }
   };
 
@@ -114,8 +128,13 @@ export default function Users() {
   };
 
   const toggleActive = async (id, next) => {
-    await api.patch(`/users/${id}/status`, { isActive: next });
-    await fetchUsers();
+    try {
+      await api.patch(`/users/${id}/status`, { isActive: next });
+      toast.success(next ? "User enabled successfully" : "User disabled successfully");
+      await fetchUsers();
+    } catch (e) {
+      toast.error("Failed to active/disable user");
+    }
   };
 
   if (!canView) {
@@ -129,6 +148,7 @@ export default function Users() {
 
   return (
     <div className="space-y-5">
+      <Toaster position="top-center" />
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -139,7 +159,7 @@ export default function Users() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => { resetForm(); setOpen(true); }}
-            className="rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black"
+            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 shadow-sm transition-colors"
           >
             + New User
           </button>

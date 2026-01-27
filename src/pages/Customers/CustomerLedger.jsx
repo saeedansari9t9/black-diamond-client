@@ -86,7 +86,8 @@ export default function CustomerLedger() {
                     title="Wallet Balance"
                     value={money(customer.walletBalance)}
                     sub="Advance Payment"
-                    icon={<Wallet className="h-4 w-4 text-green-600" />}
+                    icon={Wallet}
+                    color="green"
                 />
                 <StatCard
                     title="Net Payable"

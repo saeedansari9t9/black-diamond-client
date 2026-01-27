@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CirclePlus, Pencil, Trash2 } from "lucide-react";
+import { CirclePlus, Pencil, Trash2, X } from "lucide-react";
 import { api } from "../../api/axios";
 import toast, { Toaster } from 'react-hot-toast';
 import Swal from 'sweetalert2';
@@ -114,14 +114,17 @@ export default function Materials() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <Toaster position="top-center" />
       <div className="flex items-center justify-between">
-        <div className="text-xl font-bold">Materials</div>
+        <div>
+          <div className="text-2xl font-bold text-gray-800">Materials</div>
+          <p className="text-sm text-gray-500">Manage your raw materials inventory</p>
+        </div>
         {!showForm && (
           <button
             onClick={openNew}
-            className="flex items-center gap-2 rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black"
+            className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
             <CirclePlus size={18} /> Add New Material
           </button>
@@ -129,108 +132,139 @@ export default function Materials() {
       </div>
 
       {showForm && (
-        <div className="rounded-2xl border bg-white p-4 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <div className="text-xs text-gray-500">Material name</div>
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. viscose"
-                className="mt-1 w-full rounded-xl border bg-gray-50 px-3 py-2.5 text-sm outline-none focus:border-gray-300"
-              />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 flex-shrink-0">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">{editingId ? "Edit Material" : "Create Material"}</h2>
+                <p className="text-xs text-gray-500">Define material name and attributes</p>
+              </div>
+              <button onClick={cancelEdit} className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+                <X size={20} />
+              </button>
             </div>
-            <div className="sm:col-span-2">
-              <div className="text-xs text-gray-500">Attributes</div>
-              <div className="space-y-2 mt-2">
-                {attributes.map((a, idx) => (
-                  <div key={idx} className="grid grid-cols-12 gap-2 items-center">
-                    <input
-                      value={a.key || ''}
-                      disabled={a.key === 'prodName'}
-                      onChange={(e) => { const copy = [...attributes]; copy[idx].key = e.target.value; setAttributes(copy) }}
-                      placeholder="key"
-                      className={`col-span-2 rounded-xl border px-2 py-1 ${a.key === 'prodName' ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}
-                    />
-                    <input
-                      value={a.label || ''}
-                      disabled={a.key === 'prodName'}
-                      onChange={(e) => { const copy = [...attributes]; copy[idx].label = e.target.value; setAttributes(copy) }}
-                      placeholder="label"
-                      className={`col-span-3 rounded-xl border px-2 py-1 ${a.key === 'prodName' ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}
-                    />
-                    <select
-                      value={a.type || 'text'}
-                      disabled={a.key === 'prodName'}
-                      onChange={(e) => { const copy = [...attributes]; copy[idx].type = e.target.value; setAttributes(copy) }}
-                      className={`col-span-2 rounded-xl border px-2 py-1 ${a.key === 'prodName' ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}
-                    >
-                      <option value="text">text</option>
-                      <option value="number">number</option>
-                      <option value="select">select</option>
-                    </select>
-                    <input
-                      value={a.options || ''}
-                      disabled={a.key === 'prodName'}
-                      onChange={(e) => { const copy = [...attributes]; copy[idx].options = e.target.value; setAttributes(copy) }}
-                      placeholder="options (comma)"
-                      className={`col-span-3 rounded-xl border px-2 py-1 ${a.key === 'prodName' ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}
-                    />
-                    <label className="col-span-1 text-sm flex items-center gap-1">
-                      <input
-                        type="checkbox"
-                        disabled={a.key === 'prodName'}
-                        checked={!!a.required}
-                        onChange={(e) => { const copy = [...attributes]; copy[idx].required = e.target.checked; setAttributes(copy) }}
-                      /> Req
-                    </label>
-                    <div className="col-span-1">
-                      {a.key !== 'prodName' && (
-                        <button onClick={() => { setAttributes(attributes.filter((_, i) => i !== idx)) }} className="text-sm text-red-600 hover:text-red-700">Remove</button>
-                      )}
-                    </div>
-                  </div>
-                ))}
+
+            {/* Modal Body - Scrollable */}
+            <div className="p-6 overflow-y-auto">
+              <div className="grid grid-cols-1 gap-6">
                 <div>
-                  <button onClick={() => setAttributes([...attributes, { key: '', label: '', type: 'text', required: false, options: '' }])} className="rounded-xl bg-gray-100 px-3 py-1 text-sm">Add attribute</button>
+                  <label className="text-sm font-medium text-gray-700">Material Name</label>
+                  <input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. Viscose Fabric"
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium outline-none transition-all placeholder:font-normal focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-3">Attributes Configuration</label>
+                  <div className="space-y-3">
+                    {attributes.map((a, idx) => (
+                      <div key={idx} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start bg-gray-50 p-3 rounded-xl border border-gray-100">
+                        <div className="sm:col-span-2">
+                          <input
+                            value={a.key || ''}
+                            disabled={a.key === 'prodName'}
+                            onChange={(e) => { const copy = [...attributes]; copy[idx].key = e.target.value; setAttributes(copy) }}
+                            placeholder="Key"
+                            className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-blue-500 ${a.key === 'prodName' ? 'bg-gray-100 text-gray-500' : 'bg-white border-gray-200'}`}
+                          />
+                        </div>
+                        <div className="sm:col-span-3">
+                          <input
+                            value={a.label || ''}
+                            disabled={a.key === 'prodName'}
+                            onChange={(e) => { const copy = [...attributes]; copy[idx].label = e.target.value; setAttributes(copy) }}
+                            placeholder="Label"
+                            className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-blue-500 ${a.key === 'prodName' ? 'bg-gray-100 text-gray-500' : 'bg-white border-gray-200'}`}
+                          />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <select
+                            value={a.type || 'text'}
+                            disabled={a.key === 'prodName'}
+                            onChange={(e) => { const copy = [...attributes]; copy[idx].type = e.target.value; setAttributes(copy) }}
+                            className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-blue-500 ${a.key === 'prodName' ? 'bg-gray-100 text-gray-500' : 'bg-white border-gray-200'}`}
+                          >
+                            <option value="text">Text</option>
+                            <option value="number">Number</option>
+                            <option value="select">Dropdown</option>
+                          </select>
+                        </div>
+                        <div className="sm:col-span-3">
+                          <input
+                            value={a.options || ''}
+                            disabled={a.key === 'prodName'}
+                            onChange={(e) => { const copy = [...attributes]; copy[idx].options = e.target.value; setAttributes(copy) }}
+                            placeholder="Options (comma sep)"
+                            className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-blue-500 ${a.key === 'prodName' ? 'bg-gray-100 text-gray-500' : 'bg-white border-gray-200'}`}
+                          />
+                        </div>
+                        <div className="sm:col-span-2 flex items-center justify-between gap-2 h-full py-2">
+                          <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                            <input type="checkbox" disabled={a.key === 'prodName'} checked={!!a.required} onChange={(e) => { const copy = [...attributes]; copy[idx].required = e.target.checked; setAttributes(copy) }} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                            <span className="text-xs font-medium">Req</span>
+                          </label>
+                          {a.key !== 'prodName' && (
+                            <button onClick={() => { setAttributes(attributes.filter((_, i) => i !== idx)) }} className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors">
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    <button
+                      onClick={() => setAttributes([...attributes, { key: '', label: '', type: 'text', required: false, options: '' }])}
+                      className="w-full py-2 flex items-center justify-center gap-2 rounded-xl border border-dashed border-blue-200 bg-blue-50/50 text-sm font-medium text-blue-600 hover:bg-blue-50 transition-colors"
+                    >
+                      <CirclePlus size={16} /> Add Attribute Field
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="flex items-end flex-col sm:flex-row sm:gap-2 w-full sm:col-span-2 pt-2">
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-end gap-3 flex-shrink-0">
+              <button
+                onClick={cancelEdit}
+                className="rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all"
+              >
+                Cancel
+              </button>
               <button
                 disabled={saving}
                 onClick={handleSubmit}
-                className="w-full sm:w-auto rounded-xl bg-gray-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-black disabled:opacity-60"
+                className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 shadow-lg shadow-blue-600/10 disabled:opacity-60 transition-all"
               >
                 {saving ? "Saving..." : (editingId ? "Update Material" : "Save Material")}
-              </button>
-              <button
-                onClick={cancelEdit}
-                className="w-full sm:w-auto mt-2 sm:mt-0 rounded-xl border border-gray-300 bg-white px-6 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
               </button>
             </div>
           </div>
         </div>
       )}
 
-      <div className="rounded-2xl border bg-white shadow-sm">
-        <div className="border-b bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-600">List</div>
-        <div className="divide-y">
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div className="border-b border-gray-200 bg-slate-50 px-6 py-4">
+          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Material List</h3>
+        </div>
+        <div className="divide-y divide-gray-100">
           {rows.map((m) => (
-            <div key={m._id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-3 hover:bg-gray-50">
-              <div className="flex-1">
-                <div className="text-sm font-semibold">{m.name}</div>
-                <div className="mt-1">
+            <div key={m._id} className="group flex flex-col sm:flex-row sm:items-center sm:justify-between px-6 py-5 hover:bg-slate-50/50 transition-colors">
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="text-base font-semibold text-gray-900">{m.name}</div>
+                </div>
+                <div>
                   {m.attributes?.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {m.attributes.map((a, i) => (
-                        <span key={i} className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1 text-xs text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                          <span className="font-medium">{a.label}</span>
-                          <span className="text-blue-400">({a.type})</span>
+                        <span key={i} className="inline-flex items-center gap-1.5 rounded-md bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
+                          {a.label}
+                          <span className="text-indigo-400 opacity-75">| {a.type}</span>
                           {a.options?.length > 0 && (
-                            <span className="text-gray-500">[{a.options.join(", ")}]</span>
+                            <span className="text-gray-500 ml-0.5" title={a.options.join(", ")}>• {a.options.length} opts</span>
                           )}
                         </span>
                       ))}
@@ -240,27 +274,32 @@ export default function Materials() {
                   )}
                 </div>
               </div>
-              <div className="text-xs text-gray-400 mt-2 sm:mt-0 flex flex-col items-end gap-2">
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => openEdit(m)}
-                    className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition-colors hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
-                    title="Edit"
-                  >
-                    <Pencil size={14} /> Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(m._id)}
-                    className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition-colors hover:bg-red-50 hover:text-red-600 hover:border-red-200"
-                    title="Delete"
-                  >
-                    <Trash2 size={14} /> Delete
-                  </button>
-                </div>
+
+              <div className="mt-4 sm:mt-0 flex items-center gap-3">
+                <button
+                  onClick={() => openEdit(m)}
+                  className="flex items-center gap-1.5 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 shadow-sm hover:bg-green-100 hover:border-green-300 transition-all"
+                >
+                  <Pencil size={14} /> Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(m._id)}
+                  className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 shadow-sm hover:bg-red-100 hover:border-red-300 transition-all"
+                >
+                  <Trash2 size={14} /> Delete
+                </button>
               </div>
             </div>
           ))}
-          {!loading && rows.length === 0 ? <div className="p-6 text-sm text-gray-500">No materials</div> : null}
+          {!loading && rows.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+              <div className="rounded-full bg-gray-50 p-4 mb-3">
+                <CirclePlus size={24} className="text-gray-300" />
+              </div>
+              <p className="text-sm font-medium">No materials found</p>
+              <p className="text-xs text-gray-400 mt-1">Get started by creating a new material.</p>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

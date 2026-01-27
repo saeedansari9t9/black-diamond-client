@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { Eye } from "lucide-react";
 import { api } from "../../api/axios";
 import StatCard from "../../components/ui/StatCard";
 
@@ -148,18 +150,19 @@ export default function SalesReport() {
                 <th className="px-3 py-2 text-right">Amount</th>
                 <th className="px-3 py-2 text-right">Paid</th>
                 <th className="px-3 py-2 text-right">Due</th>
+                <th className="px-3 py-2 text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {loadingSales ? (
                 <tr>
-                  <td className="px-3 py-4 text-center text-gray-500" colSpan={8}>
+                  <td className="px-3 py-4 text-center text-gray-500" colSpan={9}>
                     Loading...
                   </td>
                 </tr>
               ) : filteredSales.length === 0 ? (
                 <tr>
-                  <td className="px-3 py-4 text-center text-gray-500" colSpan={8}>
+                  <td className="px-3 py-4 text-center text-gray-500" colSpan={9}>
                     No sales found
                   </td>
                 </tr>
@@ -191,6 +194,15 @@ export default function SalesReport() {
                       <td className="px-3 py-2 text-right text-red-600">
                         {sale.dueAmount > 0 ? money(sale.dueAmount) : "—"}
                       </td>
+                      <td className="px-3 py-2 text-center">
+                        <Link
+                          to={`/sales/invoices/${sale._id}/print`}
+                          className="inline-flex items-center justify-center rounded-lg border border-blue-200 bg-blue-50 p-1.5 text-blue-600 hover:bg-blue-100 hover:text-blue-700 transition-colors"
+                          title="View Invoice"
+                        >
+                          <Eye size={16} />
+                        </Link>
+                      </td>
                     </tr>
                   );
                 })
@@ -203,6 +215,6 @@ export default function SalesReport() {
           Showing {filteredSales.length} of {salesList.length} sales
         </div>
       </div>
-    </div>
+    </div >
   );
 }
