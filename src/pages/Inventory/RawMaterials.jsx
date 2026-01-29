@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { CirclePlus, Pencil, Trash2, X } from "lucide-react";
 import toast, { Toaster } from 'react-hot-toast';
 import Swal from 'sweetalert2';
@@ -16,12 +16,13 @@ export default function RawMaterials() {
     const [showForm, setShowForm] = useState(false);
     const [msg, setMsg] = useState("");
     const [err, setErr] = useState("");
+    const [q, setQ] = useState("");
 
     const load = async () => {
         setLoading(true);
         try {
-            const data = await fetchRawMaterials();
-            setMaterials(data || []);
+            const res = await api.get("/raw-materials");
+            setMaterials(res.data.data || []);
         } catch (e) {
             console.error(e);
         } finally {
@@ -29,7 +30,15 @@ export default function RawMaterials() {
         }
     };
 
-    useEffect(() => { load(); }, []);
+    useEffect(() => {
+        load();
+    }, []);
+
+    const filteredMaterials = useMemo(() => {
+        const term = q.toLowerCase();
+        if (!term) return materials;
+        return materials.filter(m => m.name.toLowerCase().includes(term));
+    }, [materials, q]);
 
     const handleSubmit = async () => {
         setMsg(""); setErr("");
@@ -169,31 +178,42 @@ export default function RawMaterials() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700 block mb-3">Attributes (optional)</label>
+                                    <label className="text-sm font-medium text-gray-700 block mb-3">New Fields (optional)</label>
                                     <div className="space-y-3">
                                         {attributes.map((a, idx) => (
                                             <div key={idx} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start bg-gray-50 p-3 rounded-xl border border-gray-100">
-                                                <div className="sm:col-span-2">
+                                                {/* Key input removed - auto generated */}
+
+                                                <div className="sm:col-span-4">
                                                     <input
-                                                        value={a.key || ''}
-                                                        onChange={(e) => { const copy = [...attributes]; copy[idx].key = e.target.value; setAttributes(copy) }}
-                                                        placeholder="Key"
-                                                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
+                                                        value={a.label || ''}
+                                                        disabled={a.key === 'prodName'}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            const copy = [...attributes];
+                                                            copy[idx].label = val;
+
+                                                            if (a.key !== 'prodName') {
+                                                                const generatedKey = val
+                                                                    .toLowerCase()
+                                                                    .trim()
+                                                                    .split(/[^a-zA-Z0-9]+/g)
+                                                                    .map((word, i) => i === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1))
+                                                                    .join('');
+                                                                copy[idx].key = generatedKey;
+                                                            }
+                                                            setAttributes(copy);
+                                                        }}
+                                                        placeholder="Label"
+                                                        className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-blue-500 ${a.key === 'prodName' ? 'bg-gray-100 text-gray-500' : 'bg-white border-gray-300'}`}
                                                     />
                                                 </div>
                                                 <div className="sm:col-span-3">
-                                                    <input
-                                                        value={a.label || ''}
-                                                        onChange={(e) => { const copy = [...attributes]; copy[idx].label = e.target.value; setAttributes(copy) }}
-                                                        placeholder="Label"
-                                                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
-                                                    />
-                                                </div>
-                                                <div className="sm:col-span-2">
                                                     <select
                                                         value={a.type || 'text'}
+                                                        disabled={a.key === 'prodName'}
                                                         onChange={(e) => { const copy = [...attributes]; copy[idx].type = e.target.value; setAttributes(copy) }}
-                                                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
+                                                        className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-blue-500 ${a.key === 'prodName' ? 'bg-gray-100 text-gray-500' : 'bg-white border-gray-300'}`}
                                                     >
                                                         <option value="text">Text</option>
                                                         <option value="number">Number</option>
@@ -203,28 +223,32 @@ export default function RawMaterials() {
                                                 <div className="sm:col-span-3">
                                                     <input
                                                         value={a.options || ''}
+                                                        disabled={a.key === 'prodName'}
                                                         onChange={(e) => { const copy = [...attributes]; copy[idx].options = e.target.value; setAttributes(copy) }}
                                                         placeholder="Options (comma sep)"
-                                                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
+                                                        className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-blue-500 ${a.key === 'prodName' ? 'bg-gray-100 text-gray-500' : 'bg-white border-gray-300'}`}
                                                     />
                                                 </div>
                                                 <div className="sm:col-span-2 flex items-center justify-between gap-2 h-full py-2">
                                                     <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
                                                         <input
                                                             type="checkbox"
+                                                            disabled={a.key === 'prodName'}
                                                             checked={!!a.required}
                                                             onChange={(e) => { const copy = [...attributes]; copy[idx].required = e.target.checked; setAttributes(copy) }}
                                                             className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                                         />
                                                         <span className="text-xs font-medium">Req</span>
                                                     </label>
-                                                    <button
-                                                        onClick={() => { setAttributes(attributes.filter((_, i) => i !== idx)) }}
-                                                        className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
-                                                        title="Remove Attribute"
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
+                                                    {a.key !== 'prodName' && (
+                                                        <button
+                                                            onClick={() => { setAttributes(attributes.filter((_, i) => i !== idx)) }}
+                                                            className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                                                            title="Remove Attribute"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         ))}
@@ -232,7 +256,7 @@ export default function RawMaterials() {
                                             onClick={() => setAttributes([...attributes, { key: '', label: '', type: 'text', required: false, options: '' }])}
                                             className="w-full py-2 flex items-center justify-center gap-2 rounded-xl border border-dashed border-blue-200 bg-blue-50/50 text-sm font-medium text-blue-600 hover:bg-blue-50 transition-colors"
                                         >
-                                            <CirclePlus size={16} /> Add Attribute Field
+                                            <CirclePlus size={16} /> Add New Field
                                         </button>
                                     </div>
                                 </div>
@@ -260,11 +284,17 @@ export default function RawMaterials() {
             )}
 
             <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-                <div className="border-b border-gray-200 bg-slate-50 px-6 py-4">
-                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Raw Material List</h3>
+                <div className="border-b border-gray-200 bg-slate-50 px-6 py-4 flex items-center justify-between gap-4">
+                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider whitespace-nowrap">Raw Material List</h3>
+                    <input
+                        value={q}
+                        onChange={(e) => setQ(e.target.value)}
+                        placeholder="Search raw material..."
+                        className="w-full max-w-xs rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
+                    />
                 </div>
                 <div className="divide-y divide-gray-100">
-                    {materials.map((m) => (
+                    {filteredMaterials.map((m) => (
                         <div key={m._id} className="group flex flex-col sm:flex-row sm:items-center sm:justify-between px-6 py-5 hover:bg-slate-50/50 transition-colors">
                             <div className="flex-1 space-y-2">
                                 <div className="flex items-center gap-3">
@@ -284,7 +314,7 @@ export default function RawMaterials() {
                                             ))}
                                         </div>
                                     ) : (
-                                        <span className="text-xs text-gray-400 italic">No attributes configured</span>
+                                        <span className="text-xs text-gray-400 italic">No Fields configured</span>
                                     )}
                                 </div>
                             </div>
@@ -304,7 +334,7 @@ export default function RawMaterials() {
                             </div>
                         </div>
                     ))}
-                    {!loading && materials.length === 0 && (
+                    {!loading && filteredMaterials.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-12 text-gray-500">
                             <div className="rounded-full bg-gray-50 p-4 mb-3">
                                 <CirclePlus size={24} className="text-gray-300" />

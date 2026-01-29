@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { api } from "../../api/axios";
 import { useNavigate } from "react-router-dom";
 import { X, Pencil, Trash2, Eye } from "lucide-react";
+import Swal from 'sweetalert2';
+import toast from 'react-hot-toast';
 
 export default function Customers() {
   const nav = useNavigate();
@@ -10,13 +12,14 @@ export default function Customers() {
   const [open, setOpen] = useState(false);
 
   const [form, setForm] = useState({ name: "", phone: "", address: "", notes: "" });
+  const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
     setLoading(true);
     try {
-      const res = await api.get(`/customers${q ? `?q=${encodeURIComponent(q)}` : ""}`);
+      const res = await api.get("/customers");
       setRows(res.data.data || []);
     } finally {
       setLoading(false);
@@ -25,15 +28,65 @@ export default function Customers() {
 
   useEffect(() => { load(); }, []);
 
-  const create = async () => {
+  const filteredRows = useMemo(() => {
+    const term = q.toLowerCase();
+    if (!term) return rows;
+    return rows.filter(c =>
+      (c.name || "").toLowerCase().includes(term) ||
+      (c.phone || "").includes(term)
+    );
+  }, [rows, q]);
+
+  const handleSubmit = async () => {
     setSaving(true);
     try {
-      await api.post("/customers", form);
+      if (editingId) {
+        await api.put(`/customers/${editingId}`, form);
+        toast.success("Customer updated successfully");
+      } else {
+        await api.post("/customers", form);
+        toast.success("Customer created successfully");
+      }
       setOpen(false);
-      setForm({ name: "", phone: "", address: "", notes: "" });
+      resetForm();
       await load();
+    } catch (e) {
+      toast.error("Operation failed");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const resetForm = () => {
+    setForm({ name: "", phone: "", address: "", notes: "" });
+    setEditingId(null);
+  };
+
+  const handleEdit = (c) => {
+    setEditingId(c._id);
+    setForm({ name: c.name, phone: c.phone || "", address: c.address || "", notes: c.notes || "" });
+    setOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await api.delete(`/customers/${id}`);
+        toast.success("Customer deleted");
+        load();
+      } catch (e) {
+        toast.error("Failed to delete customer");
+      }
     }
   };
 
@@ -44,7 +97,7 @@ export default function Customers() {
           <h1 className="text-xl font-bold">Customers</h1>
           <p className="text-sm text-gray-500">Manage your customers list</p>
         </div>
-        <button onClick={() => setOpen(true)} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors">
+        <button onClick={() => { resetForm(); setOpen(true); }} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors">
           + Create New Customer
         </button>
       </div>
@@ -57,9 +110,6 @@ export default function Customers() {
             placeholder="Search name/phone..."
             className="flex-1 rounded-xl border bg-gray-50 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
           />
-          <button onClick={load} className="rounded-xl border bg-white px-4 py-2.5 text-sm hover:bg-gray-50 font-medium">
-            {loading ? "Searching..." : "Search"}
-          </button>
         </div>
       </div>
 
@@ -76,7 +126,7 @@ export default function Customers() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {rows.map((c, i) => (
+              {filteredRows.map((c, i) => (
                 <tr key={c._id} className="hover:bg-gray-50/50 transition-colors cursor-pointer" onClick={() => nav(`/customers/${c._id}/ledger`)}>
                   <td className="px-6 py-4 text-gray-400 font-medium">{(i + 1).toString().padStart(2, '0')}</td>
                   <td className="px-6 py-4">
@@ -94,22 +144,28 @@ export default function Customers() {
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end gap-2">
                       <button
+                        onClick={(e) => { e.stopPropagation(); handleEdit(c); }}
+                        className="flex items-center gap-1 rounded-lg bg-blue-50 border border-blue-100 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100"
+                      >
+                        <Pencil size={14} /> Edit
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDelete(c._id); }}
+                        className="flex items-center gap-1 rounded-lg bg-red-50 border border-red-100 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100"
+                      >
+                        <Trash2 size={14} /> Delete
+                      </button>
+                      <button
                         onClick={(e) => { e.stopPropagation(); nav(`/customers/${c._id}/ledger`) }}
                         className="flex items-center gap-1 rounded-lg bg-green-50 border border-green-100 px-3 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-100"
                       >
                         Ledger
                       </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); nav(`/customers/${c._id}`) }}
-                        className="flex items-center gap-1 rounded-lg bg-blue-50 border border-blue-100 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100"
-                      >
-                        <Eye size={14} /> View
-                      </button>
                     </div>
                   </td>
                 </tr>
               ))}
-              {!loading && rows.length === 0 && (
+              {!loading && filteredRows.length === 0 && (
                 <tr>
                   <td colSpan={5} className="p-8 text-center text-sm text-gray-500 italic">No customers found</td>
                 </tr>
@@ -124,7 +180,7 @@ export default function Customers() {
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
               <div>
-                <h2 className="text-lg font-bold text-gray-900">Create Customer</h2>
+                <h2 className="text-lg font-bold text-gray-900">{editingId ? "Edit Customer" : "Create Customer"}</h2>
                 <p className="text-xs text-gray-500">Name + optional phone/address</p>
               </div>
               <button onClick={() => setOpen(false)} className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
@@ -151,10 +207,10 @@ export default function Customers() {
               </button>
               <button
                 disabled={saving || !form.name}
-                onClick={create}
+                onClick={handleSubmit}
                 className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 shadow-lg shadow-blue-600/10 disabled:opacity-60 transition-all"
               >
-                {saving ? "Creating..." : "Create Customer"}
+                {saving ? "Saving..." : (editingId ? "Update Customer" : "Create Customer")}
               </button>
             </div>
           </div>

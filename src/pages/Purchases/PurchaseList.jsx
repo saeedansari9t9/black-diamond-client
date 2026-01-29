@@ -58,16 +58,32 @@ export default function PurchaseList() {
                   <td className="px-3 py-3 font-semibold text-blue-600">{p.purchaseNo}</td>
                   <td className="px-3 py-3 text-gray-600">{dateFmt(p.createdAt)}</td>
                   <td className="px-3 py-3">
-                    {p.supplierId ? (
-                      <Link to={`/purchases/suppliers/${p.supplierId._id || p.supplierId}/ledger`} className="hover:text-blue-600 hover:underline">
-                        {p.supplierSnapshot?.name || "—"}
-                      </Link>
-                    ) : (
-                      <span>{p.supplierSnapshot?.name || "—"}</span>
-                    )}
+                    <div className="flex flex-col">
+                      {p.supplierId ? (
+                        <Link to={`/purchases/suppliers/${p.supplierId._id || p.supplierId}/ledger`} className="hover:text-blue-600 hover:underline font-medium">
+                          {p.supplierSnapshot?.name || "—"}
+                        </Link>
+                      ) : (
+                        <span className="font-medium">{p.supplierSnapshot?.name || "—"}</span>
+                      )}
+                      {p.note && <span className="text-xs text-gray-400 italic mt-0.5 max-w-[140px] truncate" title={p.note}>{p.note}</span>}
+                    </div>
                   </td>
-                  <td className="px-3 py-3 text-gray-600 max-w-xs truncate">
-                    {p.items?.map(i => `${i.description} (${i.qty}${i.unit})`).join(", ")}
+                  <td className="px-3 py-3 text-gray-600">
+                    {p.items?.map((i, idx) => (
+                      <div key={idx} className="flex flex-col mb-1 last:mb-0">
+                        <span className="font-medium text-gray-900">{i.description} <span className="text-gray-500 text-xs">({i.qty} {i.unit})</span></span>
+                        {i.attributes && Object.keys(i.attributes).length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-0.5">
+                            {Object.entries(i.attributes).map(([key, val]) => (
+                              <span key={key} className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-[10px] font-medium text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
+                                {key}: {val}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </td>
                   <td className="px-3 py-3 text-right font-medium">{money(p.grandTotal)}</td>
                   <td className="px-3 py-3 text-right text-red-600">{money(p.dueAmount)}</td>

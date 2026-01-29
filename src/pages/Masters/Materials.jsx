@@ -13,6 +13,7 @@ export default function Materials() {
   const [saving, setSaving] = useState(false);
 
   const [showForm, setShowForm] = useState(false);
+  const [q, setQ] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -24,7 +25,11 @@ export default function Materials() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
+
+  const filteredRows = import.meta.env ? rows.filter(r => r.name.toLowerCase().includes(q.toLowerCase())) : rows;
 
   const handleSubmit = async () => {
     if (!name.trim()) return toast.error("Material name required");
@@ -158,29 +163,40 @@ export default function Materials() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-3">Attributes Configuration</label>
+                  <label className="text-sm font-medium text-gray-700 block mb-3">Fields Configuration</label>
                   <div className="space-y-3">
                     {attributes.map((a, idx) => (
                       <div key={idx} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start bg-gray-50 p-3 rounded-xl border border-gray-100">
-                        <div className="sm:col-span-2">
+                        {/* Key input removed - auto generated from label */}
+
+                        <div className="sm:col-span-4">
                           <input
-                            value={a.key || ''}
+                            value={a.label || ''}
                             disabled={a.key === 'prodName'}
-                            onChange={(e) => { const copy = [...attributes]; copy[idx].key = e.target.value; setAttributes(copy) }}
-                            placeholder="Key"
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              const copy = [...attributes];
+                              copy[idx].label = val;
+
+                              // Auto-generate key for non-prodName fields
+                              if (a.key !== 'prodName') {
+                                // Simple camelCase generator
+                                const generatedKey = val
+                                  .toLowerCase()
+                                  .trim()
+                                  .split(/[^a-zA-Z0-9]+/g)
+                                  .map((word, i) => i === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1))
+                                  .join('');
+                                copy[idx].key = generatedKey;
+                              }
+
+                              setAttributes(copy);
+                            }}
+                            placeholder="Label (e.g. Color Name)"
                             className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-blue-500 ${a.key === 'prodName' ? 'bg-gray-100 text-gray-500' : 'bg-white border-gray-200'}`}
                           />
                         </div>
                         <div className="sm:col-span-3">
-                          <input
-                            value={a.label || ''}
-                            disabled={a.key === 'prodName'}
-                            onChange={(e) => { const copy = [...attributes]; copy[idx].label = e.target.value; setAttributes(copy) }}
-                            placeholder="Label"
-                            className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-blue-500 ${a.key === 'prodName' ? 'bg-gray-100 text-gray-500' : 'bg-white border-gray-200'}`}
-                          />
-                        </div>
-                        <div className="sm:col-span-2">
                           <select
                             value={a.type || 'text'}
                             disabled={a.key === 'prodName'}
@@ -218,7 +234,7 @@ export default function Materials() {
                       onClick={() => setAttributes([...attributes, { key: '', label: '', type: 'text', required: false, options: '' }])}
                       className="w-full py-2 flex items-center justify-center gap-2 rounded-xl border border-dashed border-blue-200 bg-blue-50/50 text-sm font-medium text-blue-600 hover:bg-blue-50 transition-colors"
                     >
-                      <CirclePlus size={16} /> Add Attribute Field
+                      <CirclePlus size={16} /> Add New Field
                     </button>
                   </div>
                 </div>
@@ -246,11 +262,17 @@ export default function Materials() {
       )}
 
       <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-        <div className="border-b border-gray-200 bg-slate-50 px-6 py-4">
-          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Material List</h3>
+        <div className="border-b border-gray-200 bg-slate-50 px-6 py-4 flex items-center justify-between gap-4">
+          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider whitespace-nowrap">Material List</h3>
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search material..."
+            className="w-full max-w-xs rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
+          />
         </div>
         <div className="divide-y divide-gray-100">
-          {rows.map((m) => (
+          {filteredRows.map((m) => (
             <div key={m._id} className="group flex flex-col sm:flex-row sm:items-center sm:justify-between px-6 py-5 hover:bg-slate-50/50 transition-colors">
               <div className="flex-1 space-y-2">
                 <div className="flex items-center gap-3">
@@ -270,7 +292,7 @@ export default function Materials() {
                       ))}
                     </div>
                   ) : (
-                    <span className="text-xs text-gray-400 italic">No attributes configured</span>
+                    <span className="text-xs text-gray-400 italic">No Fields configured</span>
                   )}
                 </div>
               </div>
@@ -291,7 +313,7 @@ export default function Materials() {
               </div>
             </div>
           ))}
-          {!loading && rows.length === 0 ? (
+          {!loading && filteredRows.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-gray-500">
               <div className="rounded-full bg-gray-50 p-4 mb-3">
                 <CirclePlus size={24} className="text-gray-300" />

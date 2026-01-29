@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../../api/axios";
-import { CirclePlus, Pencil, Trash2, X } from "lucide-react";
+import { CirclePlus, Pencil, Trash2, X, Eye } from "lucide-react";
 import toast, { Toaster } from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import { updateProduct, deleteProduct } from "../../api/products";
@@ -22,6 +22,7 @@ export default function Products() {
   const [showForm, setShowForm] = useState(false);
 
   const [editingId, setEditingId] = useState(null);
+  const [viewProduct, setViewProduct] = useState(null);
 
   const loadMaterials = async () => {
     try {
@@ -33,26 +34,26 @@ export default function Products() {
   const loadProducts = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (q.trim()) params.set("q", q.trim());
-      const res = await api.get(`/products?${params.toString()}`);
+      const res = await api.get("/products");
       setRows(res.data.data || []);
     } finally {
       setLoading(false);
     }
   };
 
+  const filteredRows = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    if (!term) return rows;
+    return rows.filter((p) =>
+      (p.sku || "").toLowerCase().includes(term) ||
+      (p.materialId?.name || "").toLowerCase().includes(term)
+    );
+  }, [rows, q]);
+
   useEffect(() => {
     loadMaterials();
     loadProducts();
   }, []);
-
-  useEffect(() => {
-    if (!editingId) {
-      setAttributesValues({});
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [materialId]);
 
   const selectedMaterial = useMemo(
     () => materials.find((m) => m._id === materialId),
@@ -291,6 +292,76 @@ export default function Products() {
         </div>
       )}
 
+      {/* View Modal */}
+      {viewProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Product Details</h2>
+                <p className="text-sm font-mono text-blue-600">{viewProduct.sku}</p>
+              </div>
+              <button onClick={() => setViewProduct(null)} className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="p-4 rounded-xl border border-gray-100 bg-gray-50">
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Material</span>
+                  <span className="text-base font-bold text-gray-900">{viewProduct.materialId?.name || "—"}</span>
+                </div>
+                <div className="p-4 rounded-xl border border-gray-100 bg-gray-50">
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Current Stock</span>
+                  {(() => {
+                    const st = viewProduct.currentStock || 0;
+                    if (st <= 0) return <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-red-100 text-red-700 mt-1">Out of Stock ({st})</span>;
+                    if (st < 150) return <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-orange-100 text-orange-700 mt-1">Low Stock ({st})</span>;
+                    return <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-green-100 text-green-700 mt-1">In Stock ({st})</span>;
+                  })()}
+                </div>
+              </div>
+
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-3">Product Details</span>
+                <div className="grid grid-cols-2 gap-4">
+                  {viewProduct.attributes && Object.entries(viewProduct.attributes).map(([key, val]) => (
+                    <div key={key}>
+                      <span className="text-xs text-gray-500 block capitalize">{key}</span>
+                      <span className="text-sm font-medium text-gray-900">{val}</span>
+                    </div>
+                  ))}
+                  {(!viewProduct.attributes || Object.keys(viewProduct.attributes).length === 0) && (
+                    <span className="text-sm text-gray-400 italic">No attributes defined</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl border border-blue-100 bg-blue-50">
+                  <span className="text-xs font-semibold text-blue-600 uppercase tracking-wider block mb-1">Wholesale Price</span>
+                  <span className="text-lg font-bold text-blue-900">Rs. {Number(viewProduct.wholesalePrice).toLocaleString()}</span>
+                </div>
+                <div className="p-4 rounded-xl border border-purple-100 bg-purple-50">
+                  <span className="text-xs font-semibold text-purple-600 uppercase tracking-wider block mb-1">Retail Price</span>
+                  <span className="text-lg font-bold text-purple-900">Rs. {Number(viewProduct.retailPrice).toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+              <button
+                onClick={() => setViewProduct(null)}
+                className="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* List */}
       <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
         <div className="p-4 border-b border-gray-100 flex gap-2 bg-white">
@@ -300,12 +371,6 @@ export default function Products() {
             placeholder="Search by SKU (e.g. VIS-3000)"
             className="flex-1 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium outline-none transition-all placeholder:font-normal focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
           />
-          <button
-            onClick={loadProducts}
-            className="rounded-xl border border-gray-300 bg-white px-6 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
-          >
-            Search
-          </button>
         </div>
 
         <div className="overflow-x-auto">
@@ -336,13 +401,14 @@ export default function Products() {
                         {attrLabels[key] || key}
                       </th>
                     ))}
+                    <th className="px-4 py-3 text-right">Stock</th>
                     <th className="px-4 py-3 text-right">Whole Sale</th>
                     <th className="px-4 py-3 text-right">Retail</th>
                     <th className="px-4 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {rows.map((p) => (
+                  {filteredRows.map((p) => (
                     <tr key={p._id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-4 py-3 font-semibold text-blue-600">{p.sku}</td>
                       <td className="px-4 py-3 font-medium text-gray-900">{p.materialId?.name || "—"}</td>
@@ -351,10 +417,24 @@ export default function Products() {
                           {p.attributes?.[key] || "—"}
                         </td>
                       ))}
+                      <td className="px-4 py-3 text-right font-medium text-gray-900">
+                        {(() => {
+                          const st = p.currentStock || 0;
+                          if (st <= 0) return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-50 text-red-700">Out ({st})</span>;
+                          if (st < 150) return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-50 text-orange-700">Low ({st})</span>;
+                          return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-50 text-green-700">In Stock ({st})</span>;
+                        })()}
+                      </td>
                       <td className="px-4 py-3 text-right font-medium text-gray-700">Rs. {p.wholesalePrice}</td>
                       <td className="px-4 py-3 text-right font-medium text-gray-700">Rs. {p.retailPrice}</td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => setViewProduct(p)}
+                            className="flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 shadow-sm hover:bg-blue-100 hover:border-blue-300 transition-all"
+                          >
+                            <Eye size={14} /> View
+                          </button>
                           <button
                             onClick={() => openEdit(p)}
                             className="flex items-center gap-1.5 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 shadow-sm hover:bg-green-100 hover:border-green-300 transition-all"
@@ -371,7 +451,7 @@ export default function Products() {
                       </td>
                     </tr>
                   ))}
-                  {!loading && rows.length === 0 ? (
+                  {!loading && filteredRows.length === 0 ? (
                     <tr><td className="px-4 py-12 text-gray-500 text-center" colSpan={7 + attrKeys.length}>No products found. Start by selecting a material to create one.</td></tr>
                   ) : null}
                 </tbody>

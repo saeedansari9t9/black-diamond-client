@@ -22,6 +22,7 @@ export default function AdjustStock() {
   const [search, setSearch] = useState("");
   const [products, setProducts] = useState([]);
   const [loadingP, setLoadingP] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   // Status
   const [saving, setSaving] = useState(false);
@@ -37,11 +38,11 @@ export default function AdjustStock() {
 
   const filteredProducts = useMemo(() => {
     const q = search.toLowerCase();
-    if (!q) return products.slice(0, 50);
+    if (!q) return products;
     return products.filter(p =>
       (p.sku || "").toLowerCase().includes(q) ||
       (p.materialId?.name || "").toLowerCase().includes(q)
-    ).slice(0, 50);
+    );
   }, [products, search]);
 
   const handleSubmit = async () => {
@@ -92,56 +93,79 @@ export default function AdjustStock() {
         <div className="space-y-6">
 
           {/* Product Selector */}
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">Find Product</label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <input
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 pl-10 pr-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-gray-400"
-                placeholder="Search SKU..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-              />
-            </div>
+          <div className="relative">
+            <label className="text-sm font-medium text-gray-700 mb-2 block">Select Product</label>
 
-            {search && !selectedProduct && (
-              <div className="mt-2 max-h-60 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg custom-scrollbar z-10 relative">
-                {filteredProducts.map(p => (
-                  <button
-                    key={p._id}
-                    onClick={() => { setProductId(p._id); setSearch(""); }}
-                    className="flex w-full items-center justify-between border-b border-gray-50 px-4 py-3 text-left hover:bg-blue-50/50 transition-colors last:border-0"
-                  >
-                    <div>
-                      <span className="font-semibold text-gray-800">{p.sku}</span>
-                      <span className="text-gray-500 text-xs ml-2">{p.materialId?.name}</span>
-                    </div>
-                    <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-md">Select</span>
-                  </button>
-                ))}
+            {/* Toggle Button */}
+            {!selectedProduct ? (
+              <button
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="w-full flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-500 hover:bg-gray-100 transition-colors outline-none focus:ring-4 focus:ring-blue-500/10"
+              >
+                <span>{loadingP ? "Loading products..." : "Select a product..."}</span>
+                <Search size={16} />
+              </button>
+            ) : (
+              <div className="flex items-center justify-between rounded-xl bg-blue-50/50 px-5 py-4 border border-blue-100">
+                <div className="flex items-start gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
+                    <Check size={20} />
+                  </div>
+                  <div>
+                    <div className="font-bold text-gray-900">{selectedProduct.sku}</div>
+                    <div className="text-sm text-gray-500">{selectedProduct.materialId?.name}</div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { setProductId(""); setIsDropdownOpen(true); }}
+                  className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline transition-colors"
+                >
+                  Change
+                </button>
               </div>
             )}
-          </div>
 
-          {selectedProduct && (
-            <div className="flex items-center justify-between rounded-xl bg-blue-50/50 px-5 py-4 border border-blue-100">
-              <div className="flex items-start gap-3">
-                <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
-                  <Check size={20} />
+            {/* Dropdown Menu */}
+            {isDropdownOpen && !selectedProduct && (
+              <div className="absolute top-full left-0 right-0 mt-2 rounded-xl border border-gray-200 bg-white shadow-xl z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                <div className="p-2 border-b border-gray-100 bg-gray-50">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                    <input
+                      autoFocus
+                      className="w-full rounded-lg border border-gray-200 bg-white pl-9 pr-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
+                      placeholder="Search..."
+                      value={search}
+                      onChange={e => setSearch(e.target.value)}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <div className="font-bold text-gray-900">{selectedProduct.sku}</div>
-                  <div className="text-sm text-gray-500">{selectedProduct.materialId?.name}</div>
+                <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                  {filteredProducts.map(p => (
+                    <button
+                      key={p._id}
+                      onClick={() => { setProductId(p._id); setIsDropdownOpen(false); setSearch(""); }}
+                      className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-slate-50 transition-colors border-b border-gray-50 last:border-0"
+                    >
+                      <div>
+                        <div className="font-medium text-gray-900">{p.sku}</div>
+                        <div className="text-xs text-gray-500">{p.materialId?.name}</div>
+                      </div>
+                      {p.currentStock <= 0 && <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded">Out</span>}
+                    </button>
+                  ))}
+                  {filteredProducts.length === 0 && (
+                    <div className="p-4 text-center text-sm text-gray-500 italic">No products found</div>
+                  )}
                 </div>
               </div>
-              <button
-                onClick={() => setProductId("")}
-                className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline transition-colors"
-              >
-                Change
-              </button>
-            </div>
-          )}
+            )}
+
+            {/* Backdrop to close dropdown */}
+            {isDropdownOpen && !selectedProduct && (
+              <div className="fixed inset-0 z-10" onClick={() => setIsDropdownOpen(false)} />
+            )}
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>

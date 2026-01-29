@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { ShoppingBag, TrendingUp, Calendar, Clock } from "lucide-react";
+import { ShoppingBag, TrendingUp, Calendar, Clock, Plus, Package, ShoppingCart } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { api } from "../../api/axios";
 import StatCard from "../../components/ui/StatCard";
 
 const money = (n) => Number(n || 0).toLocaleString();
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [today, setToday] = useState(null);
   const [week, setWeek] = useState(null);
   const [month, setMonth] = useState(null);
@@ -86,7 +88,20 @@ export default function Dashboard() {
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-sm text-gray-500">Welcome back, here is your business overview.</p>
         </div>
-        {loading && <div className="text-sm text-gray-500 animate-pulse">Refreshing data...</div>}
+        <div className="flex gap-3">
+          <button
+            onClick={() => navigate('/sales/new')}
+            className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-all shadow-blue-600/20"
+          >
+            <Plus size={18} /> New Sale
+          </button>
+          <button
+            onClick={() => navigate('/purchases/new')}
+            className="flex items-center gap-2 rounded-xl bg-white border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all hover:border-gray-300"
+          >
+            <Plus size={18} /> New Purchase
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">

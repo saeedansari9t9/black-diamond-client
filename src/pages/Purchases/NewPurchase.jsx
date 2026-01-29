@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, Link } from "react-router-dom"; // Added Link
-import { ArrowLeft, Check, Plus, Store, Trash2, User } from "lucide-react"; // Added Icons
+import { ArrowLeft, Check, Plus, Store, Trash2, User } from "lucide-react";
+import toast, { Toaster } from 'react-hot-toast'; // Added Icons
 import { api } from "../../api/axios";
 import { createPurchase } from "../../api/purchases";
-import { createRawMaterial } from "../../api/rawMaterials";
 
 const money = (n) => Number(n || 0).toLocaleString();
 
@@ -26,9 +26,6 @@ export default function NewPurchase() {
   const [materials, setMaterials] = useState([]);
 
   // Item Entry Form
-  const [isNewMaterial, setIsNewMaterial] = useState(false);
-  const [newMaterialName, setNewMaterialName] = useState("");
-  const [newAttributes, setNewAttributes] = useState([]); // [{ key, label, type, options: [] }]
 
   const [materialId, setMaterialId] = useState("");
   const [itemAttributes, setItemAttributes] = useState({});
@@ -56,10 +53,8 @@ export default function NewPurchase() {
 
   // When material selected, reset attributes
   useEffect(() => {
-    if (!isNewMaterial) {
-      setItemAttributes({}); // Reset dynamic attributes
-    }
-  }, [materialId, isNewMaterial]);
+    setItemAttributes({}); // Reset dynamic attributes
+  }, [materialId]);
 
   // Calculations for current single item
   const currentQty = Number(qty) || 0;
@@ -78,36 +73,58 @@ export default function NewPurchase() {
       let finalMaterialId = materialId;
       let finalMaterialName = "";
 
-      if (isNewMaterial) {
-        if (!newMaterialName.trim()) { setSaving(false); return setErr("Material Name is required"); }
-        try {
-          const mRes = await createRawMaterial({ name: newMaterialName, attributes: newAttributes });
-          finalMaterialId = mRes.data._id;
-          finalMaterialName = mRes.data.name;
-        } catch (e) {
-          setSaving(false); return setErr("Failed to create material: " + e.message);
+      const selectedMat = materials.find(m => m._id === materialId);
+      if (selectedMat) {
+        finalMaterialName = selectedMat.name;
+
+        // Validate Required Attributes
+        if (selectedMat.attributes && selectedMat.attributes.length > 0) {
+          for (const attr of selectedMat.attributes) {
+            if (attr.required) {
+              const val = itemAttributes[attr.key];
+              if (!val || (typeof val === 'string' && !val.trim())) {
+                setSaving(false);
+                return toast.error(`Attribute "${attr.label}" is required`);
+              }
+            }
+          }
         }
-      } else {
-        const selectedMat = materials.find(m => m._id === materialId);
-        if (selectedMat) finalMaterialName = selectedMat.name;
       }
 
-      if (!finalMaterialId) { setSaving(false); return setErr("Select a material"); }
-      if (currentQty <= 0) { setSaving(false); return setErr("Enter valid quantity"); }
-      if (currentPrice < 0) { setSaving(false); return setErr("Enter valid price"); }
+      if (!finalMaterialId) {
+        setSaving(false);
+        return toast.error("Select a material");
+      }
+
+      // Strict Validation
+      if (!currentQty || currentQty <= 0) {
+        setSaving(false);
+        return toast.error("Quantity is required and must be greater than 0");
+      }
+      if (!currentPrice || currentPrice <= 0) {
+        setSaving(false);
+        return toast.error("Cost/Unit is required and must be greater than 0");
+      }
 
       // 2. Prepare Supplier Info
       let finalSupplierId = supplierId;
       if (isNewSupplier) {
-        if (!newSupplierName.trim()) { setSaving(false); return setErr("Supplier Name is required"); }
+        if (!newSupplierName.trim()) {
+          setSaving(false);
+          return toast.error("Supplier Name is required");
+        }
         try {
           const splRes = await api.post("/suppliers", { name: newSupplierName, phone: newSupplierPhone });
           finalSupplierId = splRes.data.data._id;
         } catch (e) {
-          setSaving(false); return setErr("Failed to create supplier: " + (e?.response?.data?.message || e.message));
+          setSaving(false);
+          return toast.error("Failed to create supplier: " + (e?.response?.data?.message || e.message));
         }
       } else {
-        if (!finalSupplierId) { setSaving(false); return setErr("Please select a supplier"); }
+        if (!finalSupplierId) {
+          setSaving(false);
+          return toast.error("Please select a supplier");
+        }
       }
 
       // 3. Payload
@@ -127,9 +144,12 @@ export default function NewPurchase() {
       };
 
       await createPurchase(payload);
-      nav(`/purchases`);
+      toast.success("Purchase added successfully!");
+      setTimeout(() => nav(`/purchases`), 1000);
     } catch (e) {
-      setErr(e?.response?.data?.message || "Failed to save purchase");
+      const errorMsg = e?.response?.data?.message || "Failed to save purchase";
+      toast.error(errorMsg);
+      setErr(errorMsg);
     } finally {
       setSaving(false);
     }
@@ -137,6 +157,7 @@ export default function NewPurchase() {
 
   return (
     <div className="space-y-6">
+      <Toaster position="top-center" />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -240,107 +261,25 @@ export default function NewPurchase() {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="text-sm font-medium text-gray-700">Material Type</label>
-                  <button
-                    onClick={() => setIsNewMaterial(!isNewMaterial)}
-                    className="text-xs text-blue-600 font-semibold hover:text-blue-700 hover:underline"
-                  >
-                    {isNewMaterial ? "Select Existing" : "+ Create New Material"}
-                  </button>
                 </div>
 
-                {!isNewMaterial ? (
-                  <div className="relative">
-                    <select
-                      value={materialId}
-                      onChange={e => setMaterialId(e.target.value)}
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all appearance-none"
-                    >
-                      <option value="">-- Select Material --</option>
-                      {materials.map(m => <option key={m._id} value={m._id}>{m.name}</option>)}
-                    </select>
-                    <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                    </div>
+                <div className="relative">
+                  <select
+                    value={materialId}
+                    onChange={e => setMaterialId(e.target.value)}
+                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all appearance-none"
+                  >
+                    <option value="">-- Select Material --</option>
+                    {materials.map(m => <option key={m._id} value={m._id}>{m.name}</option>)}
+                  </select>
+                  <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                   </div>
-                ) : (
-                  <div className="space-y-4 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
-                    <div>
-                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 block">Material Name</label>
-                      <input
-                        placeholder="e.g. Cotton Yarn 20s"
-                        value={newMaterialName}
-                        onChange={e => setNewMaterialName(e.target.value)}
-                        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                      />
-                    </div>
-
-                    {/* Attribute Builder */}
-                    <div className="bg-white rounded-lg border border-blue-100 p-3">
-                      <div className="flex justify-between items-center mb-3 pb-2 border-b border-gray-100">
-                        <span className="text-xs font-bold text-gray-600 uppercase">Custom Attributes</span>
-                        <button
-                          onClick={() => setNewAttributes([...newAttributes, { key: "", label: "", type: "text", options: [] }])}
-                          className="text-xs flex items-center gap-1 bg-blue-50 text-blue-600 px-2 py-1 rounded-md hover:bg-blue-100 transition-colors font-semibold"
-                        >
-                          <Plus size={12} /> Add Field
-                        </button>
-                      </div>
-                      {newAttributes.length === 0 && <div className="text-center text-xs text-gray-400 py-2">No custom attributes added</div>}
-                      {newAttributes.map((attr, idx) => (
-                        <div key={idx} className="flex flex-col gap-2 mb-3 last:mb-0 bg-gray-50 p-2 rounded-md border border-gray-100">
-                          <div className="flex gap-2">
-                            <input
-                              placeholder="Label (e.g. Color)"
-                              value={attr.label}
-                              onChange={e => {
-                                const list = [...newAttributes];
-                                list[idx].label = e.target.value;
-                                list[idx].key = e.target.value.toLowerCase().replace(/\s+/g, "_");
-                                setNewAttributes(list);
-                              }}
-                              className="flex-1 rounded border border-gray-200 px-2 py-1.5 text-xs outline-none focus:border-blue-500"
-                            />
-                            <select
-                              value={attr.type}
-                              onChange={e => {
-                                const list = [...newAttributes];
-                                list[idx].type = e.target.value;
-                                setNewAttributes(list);
-                              }}
-                              className="w-24 rounded border border-gray-200 px-2 py-1.5 text-xs outline-none focus:border-blue-500 bg-white"
-                            >
-                              <option value="text">Text</option>
-                              <option value="number">Number</option>
-                              <option value="select">Select</option>
-                            </select>
-                            <button
-                              onClick={() => setNewAttributes(newAttributes.filter((_, i) => i !== idx))}
-                              className="text-gray-400 hover:text-red-500 transition-colors px-1"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                          {attr.type === 'select' && (
-                            <input
-                              placeholder="Options: Red, Blue, Green"
-                              value={attr.options?.join(", ")}
-                              onChange={e => {
-                                const list = [...newAttributes];
-                                list[idx].options = e.target.value.split(",").map(s => s.trim());
-                                setNewAttributes(list);
-                              }}
-                              className="w-full rounded border border-gray-200 px-2 py-1.5 text-xs outline-none focus:border-blue-500"
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                </div>
               </div>
 
               {/* Dynamic Attributes Inputs */}
-              {!isNewMaterial && materialId && (
+              {materialId && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
                   {(() => {
                     const mat = materials.find(m => m._id === materialId);

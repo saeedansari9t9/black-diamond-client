@@ -52,12 +52,7 @@ export default function Users() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (q.trim()) params.set("q", q.trim());
-      if (role) params.set("role", role);
-      if (active) params.set("active", active);
-
-      const res = await api.get(`/users?${params.toString()}`);
+      const res = await api.get("/users");
       setRows(res.data.data || []);
     } finally {
       setLoading(false);
@@ -69,7 +64,30 @@ export default function Users() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canView]);
 
-  const filteredCount = useMemo(() => rows.length, [rows]);
+  const filteredRows = useMemo(() => {
+    return rows.filter(u => {
+      // 1. Search text
+      const term = q.toLowerCase();
+      const matchText = !term || (
+        (u.name || "").toLowerCase().includes(term) ||
+        (u.email || "").toLowerCase().includes(term)
+      );
+
+      // 2. Role
+      const matchRole = !role || u.role === role;
+
+      // 3. Active status
+      // active state: "" (all), "true", "false"
+      // u.isActive is boolean
+      let matchActive = true;
+      if (active === "true") matchActive = u.isActive === true;
+      if (active === "false") matchActive = u.isActive === false;
+
+      return matchText && matchRole && matchActive;
+    });
+  }, [rows, q, role, active]);
+
+  const filteredCount = filteredRows.length;
 
   const handleSubmit = async () => {
     setErr("");
@@ -128,12 +146,25 @@ export default function Users() {
   };
 
   const toggleActive = async (id, next) => {
-    try {
-      await api.patch(`/users/${id}/status`, { isActive: next });
-      toast.success(next ? "User enabled successfully" : "User disabled successfully");
-      await fetchUsers();
-    } catch (e) {
-      toast.error("Failed to active/disable user");
+    const action = next ? "enable" : "disable";
+    const result = await Swal.fire({
+      title: `Are you sure?`,
+      text: `Do you want to ${action} this user?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: next ? '#10B981' : '#d33',
+      cancelButtonColor: '#6B7280',
+      confirmButtonText: `Yes, ${action} him!`
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await api.patch(`/users/${id}/status`, { isActive: next });
+        toast.success(next ? "User enabled successfully" : "User disabled successfully");
+        await fetchUsers();
+      } catch (e) {
+        toast.error("Failed to update user status");
+      }
     }
   };
 
@@ -204,12 +235,7 @@ export default function Users() {
           </div>
 
           <div className="lg:col-span-1">
-            <button
-              onClick={fetchUsers}
-              className="w-full rounded-xl border bg-white px-3 py-2.5 text-sm hover:bg-gray-50"
-            >
-              {loading ? "…" : "Go"}
-            </button>
+            {/* Search button removed for instant search */}
           </div>
         </div>
 
@@ -237,7 +263,7 @@ export default function Users() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((u) => (
+              {filteredRows.map((u) => (
                 <tr key={u._id} className="border-b last:border-b-0 hover:bg-gray-50">
                   <td className="px-5 py-4 text-sm font-semibold text-gray-900">{u.name}</td>
                   <td className="px-5 py-4 text-sm text-gray-700">{u.email}</td>
@@ -274,7 +300,7 @@ export default function Users() {
                   </td>
                 </tr>
               ))}
-              {rows.length === 0 && !loading ? (
+              {filteredRows.length === 0 && !loading ? (
                 <tr>
                   <td className="px-5 py-8 text-sm text-gray-500" colSpan={5}>
                     No users found
@@ -287,7 +313,7 @@ export default function Users() {
 
         {/* Mobile cards */}
         <div className="md:hidden divide-y">
-          {rows.map((u) => (
+          {filteredRows.map((u) => (
             <div key={u._id} className="p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -317,7 +343,7 @@ export default function Users() {
               </div>
             </div>
           ))}
-          {rows.length === 0 && !loading ? (
+          {filteredRows.length === 0 && !loading ? (
             <div className="p-6 text-sm text-gray-500">No users found</div>
           ) : null}
         </div>

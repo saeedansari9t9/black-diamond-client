@@ -207,15 +207,15 @@ export default function SalesNew() {
       {/* Top form */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         {/* Product Picker */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm xl:col-span-1 flex flex-col h-[500px]">
-          <div className="flex items-center justify-between mb-4">
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm xl:col-span-1 flex flex-col h-[600px] xl:h-[calc(100vh-9rem)] xl:sticky xl:top-6">
+          <div className="flex items-center justify-between mb-4 flex-shrink-0">
             <div className="text-sm font-bold text-gray-800">Add Products</div>
             <div className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
               {loadingProducts ? "Loading…" : `${products.length} items`}
             </div>
           </div>
 
-          <div className="mb-4">
+          <div className="mb-4 flex-shrink-0">
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
