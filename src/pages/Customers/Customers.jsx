@@ -161,6 +161,12 @@ export default function Customers() {
                       >
                         Ledger
                       </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); nav(`/customers/${c._id}`) }}
+                        className="flex items-center gap-1 rounded-lg bg-gray-50 border border-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-100"
+                      >
+                        Detail
+                      </button>
                     </div>
                   </td>
                 </tr>

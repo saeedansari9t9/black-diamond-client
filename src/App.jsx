@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import { Toaster } from "react-hot-toast";
 
 import Login from "./pages/Auth/Login";
 import Dashboard from "./pages/Dashboard/Dashboard";
@@ -16,6 +17,7 @@ import Invoices from "./pages/Sales/Invoices";
 import Customers from "./pages/Customers/Customers";
 import Materials from "./pages/Masters/Materials";
 import Products from "./pages/Masters/Products";
+import ProductPrices from "./pages/Masters/ProductPrices";
 import Suppliers from "./pages/Purchases/Suppliers";
 import PurchaseList from "./pages/Purchases/PurchaseList";
 import NewPurchase from "./pages/Purchases/NewPurchase";
@@ -29,6 +31,7 @@ import RawMaterials from "./pages/Inventory/RawMaterials";
 export default function App() {
   return (
     <BrowserRouter>
+      <Toaster position="top-center" />
       <Routes>
         <Route path="/login" element={<Login />} />
 
@@ -53,6 +56,7 @@ export default function App() {
           <Route path="/customers/:id/ledger" element={<CustomerLedger />} />
           <Route path="/masters/materials" element={<Materials />} />
           <Route path="/masters/products" element={<Products />} />
+          <Route path="/masters/product-prices" element={<ProductPrices />} />
 
           {/* Purchase Routes */}
           <Route path="/purchases" element={<PurchaseList />} />

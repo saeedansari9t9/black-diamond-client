@@ -15,6 +15,7 @@ export default function Dashboard() {
 
   const [topProducts, setTopProducts] = useState([]);
   const [topCustomers, setTopCustomers] = useState([]);
+  const [todaySalesList, setTodaySalesList] = useState([]);
 
   const [loading, setLoading] = useState(true);
 
@@ -22,13 +23,18 @@ export default function Dashboard() {
     const run = async () => {
       setLoading(true);
       try {
-        const [t, w, m, lm, tp, tc] = await Promise.all([
+        const now = new Date();
+        const start = new Date(now.setHours(0, 0, 0, 0)).toISOString();
+        const end = new Date(now.setHours(23, 59, 59, 999)).toISOString();
+
+        const [t, w, m, lm, tp, tc, ts] = await Promise.all([
           api.get("/reports/sales-summary?range=today"),
           api.get("/reports/sales-summary?range=week"),
           api.get("/reports/sales-summary?range=month"),
           api.get("/reports/sales-summary?range=lastMonth"),
           api.get("/reports/top-products?limit=10"),
           api.get("/reports/top-customers?range=month&limit=10"),
+          api.get(`/sales?from=${start}&to=${end}`),
         ]);
 
         setToday(t.data.data);
@@ -37,6 +43,26 @@ export default function Dashboard() {
         setLastMonth(lm.data.data);
         setTopProducts(tp.data.data || []);
         setTopCustomers(tc.data.data || []);
+
+        // Flatten today's sales into list of items
+        const rawSales = ts.data.data || [];
+        const flatItems = [];
+        rawSales.forEach(sale => {
+          sale.items.forEach(item => {
+            flatItems.push({
+              productName: item.productId?.materialId?.name || "Unknown Product",
+              sku: item.productId?.sku || "-",
+              quality: item.productId?.qualityType || "-",
+              qty: item.qty,
+              total: item.lineTotal,
+              customerName: sale.customerSnapshot?.name || sale.customerName || "Walk-in",
+              customerPhone: sale.customerSnapshot?.phone || "",
+              isRegistered: !!sale.customerId && !sale.isNewCustomer // Only true if existing customer
+            });
+          });
+        });
+        setTodaySalesList(flatItems);
+
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
       } finally {
@@ -117,16 +143,62 @@ export default function Dashboard() {
         ))}
       </div>
 
+
+      <div className="rounded-2xl border bg-white p-4 shadow-sm">
+        <div className="mb-3 text-sm font-semibold">Today's Total Sell</div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-gray-50 border-b text-gray-700">
+              <tr>
+                <th className="px-3 py-3 font-semibold rounded-tl-lg">Product</th>
+                <th className="px-3 py-3 font-semibold">Customer</th>
+                <th className="px-3 py-3 text-right font-semibold">Qty</th>
+                <th className="px-3 py-3 text-right font-semibold rounded-tr-lg">Price</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {todaySalesList.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-2 py-4 text-center text-gray-500">No sales today</td>
+                </tr>
+              ) : (
+                todaySalesList.map((item, i) => (
+                  <tr key={i} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-3 py-3">
+                      <div className="font-medium text-gray-900">{item.productName}</div>
+                      <div className="text-xs text-gray-500">{item.sku} | {item.quality}</div>
+                    </td>
+                    <td className="px-3 py-3">
+                      <div className="font-medium text-gray-900">{item.customerName}</div>
+                      <div className="text-xs mt-1 flex items-center gap-2">
+                        {item.isRegistered ? (
+                          <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium ring-1 ring-inset ring-green-600/20 text-green-700">Old Customer</span>
+                        ) : (
+                          <span className="inline-flex items-center rounded-md bg-orange-50 px-2 py-1 text-xs font-medium ring-1 ring-inset ring-orange-600/10 text-orange-700">Walk-in</span>
+                        )}
+                        {item.customerPhone && <span className="text-gray-500">{item.customerPhone}</span>}
+                      </div>
+                    </td>
+                    <td className="px-3 py-3 text-right font-medium text-gray-900">{item.qty}</td>
+                    <td className="px-3 py-3 text-right font-medium text-gray-900">{money(item.total)}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         {/* Top Selling Products */}
         <div className="rounded-2xl border bg-white p-4 shadow-sm">
           <div className="mb-3 text-sm font-semibold">Top Selling Products</div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="border-b text-gray-500">
+              <thead className="bg-gray-50 border-b text-gray-700">
                 <tr>
-                  <th className="px-2 py-2">Product</th>
-                  <th className="px-2 py-2 text-right">Qty Sold</th>
+                  <th className="px-3 py-3 font-semibold rounded-tl-lg">Product</th>
+                  <th className="px-3 py-3 text-right font-semibold rounded-tr-lg">Qty Sold</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -155,10 +227,10 @@ export default function Dashboard() {
           <div className="mb-3 text-sm font-semibold">Top Customers (This Month)</div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="border-b text-gray-500">
+              <thead className="bg-gray-50 border-b text-gray-700">
                 <tr>
-                  <th className="px-2 py-2">Customer</th>
-                  <th className="px-2 py-2 text-right">Total Spent</th>
+                  <th className="px-3 py-3 font-semibold rounded-tl-lg">Customer</th>
+                  <th className="px-3 py-3 text-right font-semibold rounded-tr-lg">Total Spent</th>
                 </tr>
               </thead>
               <tbody className="divide-y">

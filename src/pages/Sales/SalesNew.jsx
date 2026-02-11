@@ -15,6 +15,7 @@ export default function SalesNew() {
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [paidAmount, setPaidAmount] = useState("");
   const [note, setNote] = useState("");
+  const [walkInPhone, setWalkInPhone] = useState(""); // New state for walk-in phone
 
   // product search + list
   const [search, setSearch] = useState("");
@@ -130,16 +131,33 @@ export default function SalesNew() {
     return Math.max(0, grandTotal - Number(paidAmount || 0));
   }, [grandTotal, paidAmount]);
 
-  // when sale type changes, update default prices (only if current price is 0)
+  // Auto-fill paid amount with grand total
+  useEffect(() => {
+    setPaidAmount(grandTotal);
+  }, [grandTotal]);
+
+  // when sale type changes, update prices for all items in cart
   useEffect(() => {
     setItems((prev) =>
       prev.map((it) => {
-        // keep manual prices
-        if (Number(it.price) > 0) return it;
-        return it;
+        // Find the product in our loaded products list
+        const product = products.find((p) => p._id === it.productId);
+        if (!product) return it;
+
+        // Determine new price based on sale type
+        const newPrice =
+          saleType === "retail"
+            ? Number(product.retailPrice || 0)
+            : Number(product.wholesalePrice || 0);
+
+        // Update the item price
+        return {
+          ...it,
+          price: newPrice,
+        };
       })
     );
-  }, [saleType]);
+  }, [saleType, products]);
 
   const saveSale = async () => {
     setSaving(true);
@@ -154,6 +172,7 @@ export default function SalesNew() {
       const payload = {
         customerId: customerId || null,
         customerName: customerName.trim() || "Walk-in",
+        customerPhone: walkInPhone.trim(), // Send phone to backend
         saleType,
         items: items.map((it) => ({
           productId: it.productId,
@@ -256,20 +275,43 @@ export default function SalesNew() {
         <div className="space-y-6 xl:col-span-2">
           <div className="rounded-2xl border border-gray-200 border-l-4 border-l-blue-600 bg-white p-6 shadow-sm">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
-              <div className="md:col-span-2">
-                <label className="text-sm font-medium text-gray-700">Customer</label>
-                <select
-                  value={customerId}
-                  onChange={(e) => setCustomerId(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                >
-                  <option value="">Walk-in Customer</option>
-                  {customers.map((c) => (
-                    <option key={c._id} value={c._id}>
-                      {c.name} {c.phone ? `(${c.phone})` : ""}
-                    </option>
-                  ))}
-                </select>
+              <div className="md:col-span-2 space-y-3">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Customer</label>
+                  <select
+                    value={customerId}
+                    onChange={(e) => setCustomerId(e.target.value)}
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  >
+                    <option value="">Walk-in Customer</option>
+                    {customers.map((c) => (
+                      <option key={c._id} value={c._id}>
+                        {c.name} {c.phone ? `(${c.phone})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {!customerId && (
+                  <div className="grid grid-cols-2 gap-3 animate-fade-in-down">
+                    <div>
+                      <input
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        placeholder="Customer Name"
+                        className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all placeholder:text-gray-400"
+                      />
+                    </div>
+                    <div>
+                      <input
+                        value={walkInPhone}
+                        onChange={(e) => setWalkInPhone(e.target.value)}
+                        placeholder="Phone Number"
+                        className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all placeholder:text-gray-400"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>

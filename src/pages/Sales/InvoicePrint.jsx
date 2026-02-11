@@ -203,12 +203,12 @@ export default function InvoicePrint() {
                     {sale.items.map((it, idx) => (
                       <tr key={idx}>
                         <td className="py-4 text-sm text-gray-900">
-                          <div className="font-semibold">{it.productId?.materialId?.name || "Item"}</div>
-                          <div className="text-xs text-gray-500 mt-0.5">{it.productId?.sku}</div>
+                          <div className="font-semibold text-md">{it.productId?.materialId?.name || "Item"}</div>
+                          <div className="text-md text-gray-500 mt-0.5">{it.productId?.sku}</div>
                         </td>
-                        <td className="py-4 text-right text-sm text-gray-600">{money(it.price)}</td>
-                        <td className="py-4 text-right text-sm text-gray-600">{it.qty}</td>
-                        <td className="py-4 text-right text-sm font-semibold text-gray-900">{money(it.lineTotal)}</td>
+                        <td className="py-4 text-right text-md text-gray-600">{money(it.price)}</td>
+                        <td className="py-4 text-right text-md text-gray-600">{it.qty}</td>
+                        <td className="py-4 text-right text-md font-semibold text-gray-900">{money(it.lineTotal)}</td>
                       </tr>
                     ))}
                   </tbody>
