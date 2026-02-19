@@ -66,7 +66,7 @@ export default function InvoicePrintThermal() {
             <div className="bg-white p-2 shadow-lg print:shadow-none print:p-0">
                 <div
                     id="thermal-print-area"
-                    className="bg-white text-black font-mono text-[10px] leading-tight"
+                    className="bg-white text-black font-mono text-[12px] leading-normal"
                     style={{ width: "80mm" }}
                 >
                     <style>{`
@@ -74,76 +74,100 @@ export default function InvoicePrintThermal() {
             @media print {
               body { margin: 0; padding: 0; }
               .no-print { display: none !important; }
-              #thermal-print-area { width: 100% !important; padding: 5px; }
+              #thermal-print-area { width: 100% !important; padding: 10px 5px; }
             }
           `}</style>
 
                     {/* Header */}
-                    <div className="text-center mb-2">
-                        <div className="text-sm font-bold uppercase">Black Diamond</div>
-                        <div className="text-[9px]">Karachi, Pakistan</div>
-                        <div className="text-[9px]">0300-1234567</div>
+                    <div className="text-center mb-4">
+                        <img src="/Diamond.png" alt="Logo" className="w-24 mx-auto mb-2" />
+                        <div className="text-[11px]">Karachi, Pakistan</div>
+                        <div className="text-[11px]">0300-1234567</div>
                     </div>
 
-                    <div className="border-b border-black border-dashed my-1"></div>
+                    <div className="border-b border-black border-dashed my-2"></div>
 
                     {/* Invoice Meta */}
-                    <div className="flex justify-between">
+                    <div className="flex justify-between mb-1">
                         <span>Inv No:</span>
                         <span className="font-bold">{sale.invoiceNo}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between mb-1">
                         <span>Date:</span>
-                        <span>{new Date(sale.createdAt).toLocaleDateString()}</span>
+                        <span>{new Date(sale.createdAt).toLocaleString()}</span>
                     </div>
-                    <div className="mt-1">
+                    <div className="mt-2">
                         <span className="block italic">Customer:</span>
                         <span className="font-bold block">{sale.customerSnapshot?.name || sale.customerName}</span>
                         {sale.customerSnapshot?.phone && (
-                            <span className="block text-[9px]">{sale.customerSnapshot.phone}</span>
+                            <span className="block text-[11px]">{sale.customerSnapshot.phone}</span>
                         )}
                     </div>
 
-                    <div className="border-b border-black border-dashed my-1"></div>
+                    <div className="border-b border-black border-b my-2"></div>
 
-                    {/* Items */}
-                    <div className="space-y-1">
-                        {sale.items.map((it, idx) => (
-                            <div key={idx} className="flex flex-col">
-                                <div className="font-bold">{it.productId?.materialId?.name || "Item"}</div>
-                                {it.productId?.sku && <div className="text-[9px]">{it.productId.sku}</div>}
-                                <div className="flex justify-between pl-2">
-                                    <span>{it.qty} x {money(it.price)}</span>
-                                    <span className="font-bold">{money(it.lineTotal)}</span>
-                                </div>
-                            </div>
-                        ))}
+                    {/* Items Header */}
+                    <div className="flex justify-between font-bold border-b border-black text-[11px] mb-2 pb-1">
+                        <span className="w-1/3 text-left">Qty</span>
+                        <span className="w-1/3 text-center">Rate</span>
+                        <span className="w-1/3 text-right">Total</span>
                     </div>
 
-                    <div className="border-b border-black border-dashed my-1"></div>
+                    {/* Items */}
+                    <div className="space-y-2">
+                        {sale.items.map((it, idx) => {
+                            // Logic to get the product name from the first material attribute
+                            let displayName = it.productId?.materialId?.name || "Item";
+                            const matAttrs = it.productId?.materialId?.attributes || [];
+                            const prodAttrs = it.productId?.attributes || {};
+
+                            if (matAttrs.length > 0) {
+                                const firstKey = matAttrs[0].key;
+                                if (prodAttrs[firstKey]) {
+                                    displayName = prodAttrs[firstKey];
+                                }
+                            }
+
+                            return (
+                                <div key={idx} className="flex flex-col mb-1 border-b border-gray-200 pb-2 last:border-0">
+                                    {/* Row 1: Product Name */}
+                                    <div className="font-bold text-left mb-1">{displayName}</div>
+
+                                    {/* Row 2: Qty | Rate | Total */}
+                                    <div className="flex justify-between text-[11px]">
+                                        <span className="w-1/3 text-left">{it.qty}</span>
+                                        <span className="w-1/3 text-center">{money(it.price)}</span>
+                                        <span className="w-1/3 text-right font-bold">{money(it.lineTotal)}</span>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    <div className="border-b border-black border-dashed my-2"></div>
 
                     {/* Totals */}
-                    <div className="flex justify-between">
+                    <div className="flex justify-between mb-1">
                         <span>Subtotal:</span>
                         <span>{money(totals.sub)}</span>
                     </div>
                     {sale.discount > 0 && (
-                        <div className="flex justify-between">
+                        <div className="flex justify-between mb-1">
                             <span>Discount:</span>
                             <span>- {money(sale.discount)}</span>
                         </div>
                     )}
-                    <div className="flex justify-between text-xs font-bold mt-1">
+                    <div className="flex justify-between text-base font-bold mt-2">
                         <span>TOTAL:</span>
                         <span>Rs. {money(sale.grandTotal)}</span>
                     </div>
 
-                    <div className="border-b border-black border-dashed my-1"></div>
+                    <div className="border-b border-black border-dashed my-2"></div>
 
                     {/* Footer */}
-                    <div className="text-center mt-2">
-                        <div className="text-[9px]">Thank you for your business!</div>
-                        <div className="text-[8px] mt-1">Software by BlackDiamond ERP</div>
+                    <div className="text-center mt-4">
+                        <div className="text-[11px] mb-1">Thank you for your business!</div>
+                        <div className="text-[10px]">Software by BlackDiamond ERP</div>
                     </div>
                 </div>
             </div>

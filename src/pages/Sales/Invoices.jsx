@@ -147,6 +147,7 @@ export default function Invoices() {
                                 <th className="px-6 py-4">Date & Time</th>
                                 <th className="px-6 py-4">Customer</th>
                                 <th className="px-6 py-4">Type</th>
+                                <th className="px-6 py-4 text-center">Items</th>
                                 <th className="px-6 py-4 text-right">Total</th>
                                 <th className="px-6 py-4 text-right">Paid</th>
                                 <th className="px-6 py-4 text-right">Due</th>
@@ -156,7 +157,7 @@ export default function Invoices() {
                         <tbody className="divide-y divide-gray-100">
                             {loading ? (
                                 <tr>
-                                    <td className="px-6 py-12 text-center text-gray-500" colSpan={8}>
+                                    <td className="px-6 py-12 text-center text-gray-500" colSpan={9}>
                                         <div className="flex justify-center items-center gap-2">
                                             <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-blue-600"></div> Loading...
                                         </div>
@@ -164,7 +165,7 @@ export default function Invoices() {
                                 </tr>
                             ) : filteredInvoices.length === 0 ? (
                                 <tr>
-                                    <td className="px-6 py-12 text-center text-gray-500 italic" colSpan={8}>
+                                    <td className="px-6 py-12 text-center text-gray-500 italic" colSpan={9}>
                                         No invoices found matching your criteria.
                                     </td>
                                 </tr>
@@ -186,6 +187,9 @@ export default function Invoices() {
                                             <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${(inv.customerSnapshot?.name || inv.customerName || "").toLowerCase() === 'walk-in' ? 'bg-orange-50 text-orange-700 border border-orange-100' : 'bg-purple-50 text-purple-700 border border-purple-100'}`}>
                                                 {(inv.customerSnapshot?.name || inv.customerName || "").toLowerCase() === 'walk-in' ? 'Walk-in' : 'Registered'}
                                             </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-center font-medium text-gray-600">
+                                            {inv.items?.length || 0}
                                         </td>
                                         <td className="px-6 py-4 text-right font-bold text-gray-900">{money(inv.grandTotal)}</td>
                                         <td className="px-6 py-4 text-right font-medium text-green-600">{money(inv.paidAmount)}</td>
