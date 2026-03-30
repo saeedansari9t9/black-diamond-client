@@ -17,7 +17,8 @@ import {
   Moon,
   ShoppingCart,
   Settings,
-  House
+  House,
+  CreditCard
 } from "lucide-react";
 
 export default function Sidebar({ isOpen, onClose }) {
@@ -168,6 +169,12 @@ export default function Sidebar({ isOpen, onClose }) {
       label: "Customers",
       icon: <Users size={20} />,
       roles: ["admin", "manager", "sales", "accountant"],
+    },
+    {
+      to: "/board-committee",
+      label: "BC Management",
+      icon: <CreditCard size={20} />,
+      roles: ["admin", "manager"],
     },
     {
       label: "Settings",

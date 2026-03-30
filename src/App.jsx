@@ -27,6 +27,7 @@ import Stock from "./pages/Inventory/Stock";
 import AdjustStock from "./pages/Inventory/AdjustStock";
 import ProductionEntry from "./pages/Inventory/ProductionEntry";
 import RawMaterials from "./pages/Inventory/RawMaterials";
+import BoardCommittee from "./pages/BoardCommittee/BoardCommittee";
 
 export default function App() {
   return (
@@ -70,6 +71,7 @@ export default function App() {
           <Route path="/inventory/adjust-stock" element={<AdjustStock />} />
           <Route path="/inventory/production" element={<ProductionEntry />} />
           <Route path="/inventory/raw-materials" element={<RawMaterials />} />
+          <Route path="/board-committee" element={<BoardCommittee />} />
         </Route>
       </Routes>
     </BrowserRouter>
